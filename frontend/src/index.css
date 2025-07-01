@@ -2,3 +2,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ADICIONAR #root AOS SELETORES */
+html, body, #root { 
+  overflow: hidden; /* Impede a rolagem principal do navegador */
+  height: 100%; /* Garante que ocupem 100% da altura da viewport */
+  margin: 0; /* Remove margens padrão do navegador */
+}

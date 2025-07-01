@@ -99,7 +99,13 @@ export class ChatRepository {
           reject(err);
         })
         .on('data', (row) => {
-          console.log("readAllMessages: Row data from CSV:", row); 
+          console.log("readAllMessages: Raw row data from CSV:", row); // Log a linha completa
+
+          // ADICIONAR ESTE LOG PARA CONTEÚDO DE ARQUIVO:
+          if (row.isArquivo === 'true') {
+              console.log("readAllMessages: Content for file message (isArquivo=true):", row.content);
+          }
+
           results.push({
             id: row.id,
             senderId: row.senderId,

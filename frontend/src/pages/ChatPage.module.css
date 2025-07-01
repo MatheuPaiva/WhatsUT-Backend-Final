@@ -1,269 +1,211 @@
+/* ChatPage.module.css */
+
 .chatLayout {
-    display: grid;
-    grid-template-columns: 300px 1fr;
+    display: flex;
     height: 100vh;
-    font-family: 'Inter', sans-serif;
-    background-color: #111827; /* gray-900 */
-    color: #d1d5db; /* gray-300 */
-}
-
-.sidebar {
-    background-color: #1f2937; /* gray-800 */
-    border-right: 1px solid #374151; /* gray-700 */
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-}
-
-.sidebarHeader {
-    padding: 1rem;
-    font-weight: 600;
-    border-bottom: 1px solid #374151; /* gray-700 */
-    background-color: #111827; /* gray-900 */
-    text-align: center;
-}
-
-.contactsList {
-    flex-grow: 1;
-    overflow-y: auto;
-}
-
-.listTitle {
-    padding: 1rem 1rem 0.5rem 1rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #9ca3af; /* gray-400 */
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.contactItem {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    border-bottom: 1px solid #374151; /* gray-700 */
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    transition: background-color 0.2s;
-}
-
-.contactItem:hover {
-    background-color: #374151; /* gray-700 */
-}
-
-.contactItem.active {
-    background-color: #3b82f6; /* blue-500 */
+    background-color: #111827;
     color: white;
-}
-
-.mainContent {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .sidebar {
+    width: 260px;
+    background-color: #1f2937;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    background-color: #111827; /* gray-900 */
-}
-
-.chatHeader {
-    padding: 1rem;
-    background-color: #1f2937; /* gray-800 */
-    border-bottom: 1px solid #374151; /* gray-700 */
-}
-
-.chatHeader h2 {
-    margin: 0;
-    font-size: 1.25rem;
-    color: #f9fafb; /* gray-50 */
-}
-
-.chatWindow {
-    flex-grow: 1;
-    padding: 1rem;
-    overflow-y: auto;
+    border-right: 1px solid #374151;
+  }
+  
+  .sidebarHeader {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.messageInputArea {
-    padding: 1rem;
-    border-top: 1px solid #374151; /* gray-700 */
-    background-color: #1f2937; /* gray-800 */
-    display: flex;
-    gap: 1rem;
-}
-
-.messageInput {
-    flex-grow: 1;
-    padding: 0.75rem;
-    border: 1px solid #4b5563; /* gray-600 */
-    border-radius: 0.375rem;
-    background-color: #374151; /* gray-700 */
-    color: #f3f4f6; /* gray-100 */
-}
-
-.messageInput:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px #1f2937, 0 0 0 4px #3b82f6;
-}
-
-.sendButton {
-    padding: 0.5rem 1rem;
-    background-color: #2563eb; /* blue-600 */
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .logoutButton {
+    background-color: #ef4444;
     color: white;
     border: none;
-    border-radius: 0.375rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 4px;
     cursor: pointer;
-    font-weight: 600;
-}
-
-.sendButton:hover {
-    background-color: #1d4ed8;
-}
-
-.placeholder {
+  }
+  
+  .contactsList {
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  
+  .listTitle {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 1rem;
+    text-transform: uppercase;
+  }
+  
+  .contactItem {
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.25rem;
+    border-radius: 6px;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #6b7280; /* gray-500 */
-    font-size: 1.125rem;
-}
-
-.onlineIndicator, .offlineIndicator {
+    gap: 0.5rem;
+    color: white;
+  }
+  
+  .contactItem:hover {
+    background-color: #374151;
+  }
+  
+  .active {
+    background-color: #3b82f6;
+    color: white;
+  }
+  
+  .onlineIndicator {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    display: inline-block;
-    flex-shrink: 0;
-}
-
-.onlineIndicator {
-    background-color: #22c55e; /* green-500 */
-}
-
-.offlineIndicator {
-    background-color: #6b7280; /* gray-500 */
-}
-
-.logoutButton {
-    background: #ef4444; /* red-500 */
-    color: white;
-    border: none;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    font-size: 0.8rem;
-    margin-top: 0.5rem;
-}
-
-.logoutButton:hover {
-    background: #dc2626; /* red-600 */
-}
-
-.error {
-    background-color: #fecaca; /* red-200 */
-    color: #991b1b; /* red-800 */
-    padding: 0.75rem;
-    text-align: center;
-    font-size: 0.875rem;
-}
-
-
-
-.messageBubble {
-    max-width: 70%;
-    width: fit-content;
-    padding: 0.5rem 1rem;
-    border-radius: 1.25rem;
+    background-color: #10b981;
+  }
+  
+  .offlineIndicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #6b7280;
+  }
+  
+  .mainContent {
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-}
-
-.myMessage {
-    background-color: #2563eb; /* blue-600 */
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 0.25rem;
-}
-
-.theirMessage {
-    background-color: #374151; /* gray-700 */
-    color: #f3f4f6; /* gray-100 */
-    align-self: flex-start;
-    border-bottom-left-radius: 0.25rem;
-}
-
-.messageContent {
+    background-color: #111827;
+  }
+  
+  .chatHeader {
+    padding: 1rem;
+    background-color: #1f2937;
+    border-bottom: 1px solid #374151;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
+  .chatWindow {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-}
-
-.messageContent p {
-    margin: 0;
-    word-break: break-word; /* Quebra palavras longas */
-}
-
-.messageTimestamp {
-    font-size: 0.75rem;
-    color: #9ca3af; /* gray-400 */
-    align-self: flex-end;
-    margin-top: 0.25rem;
-}
-
-.myMessage .messageTimestamp {
-    color: #dbeafe; /* blue-100 */
-}
-
-.messageInputArea {
-    /* ... (estilos existentes) */
-    display: flex; /* Garante que os itens fiquem na mesma linha */
-    align-items: center; /* Alinha verticalmente os itens */
-    gap: 1rem;
-}
-
-.attachButton {
-    background: none;
-    border: none;
-    color: #9ca3af; /* Cor do ícone, por exemplo */
-    cursor: pointer;
-    padding: 0.5rem;
-    display: flex; /* Para centralizar o ícone */
-    align-items: center;
-    justify-content: center;
-    border-radius: 0.375rem;
-    transition: background-color 0.2s;
-    flex-shrink: 0; /* Impede que o botão encolha */
-}
-
-.attachButton:hover {
-    background-color: #374151; /* gray-700 */
-}
-
-.selectedFilePreview {
-    flex-grow: 1; /* Ocupa espaço como o input */
-    padding: 0.75rem;
-    border: 1px solid #4b5563; /* gray-600 */
-    border-radius: 0.375rem;
-    background-color: #374151; /* gray-700 */
-    color: #f3f4f6; /* gray-100 */
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     gap: 0.5rem;
-    word-break: break-all; /* Quebra o nome do arquivo se for muito longo */
-}
-
-.removeFileButton {
+  }
+  
+  .messageBubble {
+    max-width: 70%;
+    padding: 0.75rem;
+    border-radius: 12px;
+    position: relative;
+    display: inline-block;
+    word-wrap: break-word;
+  }
+  
+  .myMessage {
+    align-self: flex-end;
+    background-color: #3b82f6;
+    color: white;
+  }
+  
+  .theirMessage {
+    align-self: flex-start;
+    background-color: #4b5563;
+    color: white;
+  }
+  
+  .messageContent p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  
+  .messageTimestamp {
+    font-size: 0.7rem;
+    color: #d1d5db;
+    margin-top: 4px;
+    display: block;
+    text-align: right;
+  }
+  
+  .messageInputArea {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-top: 1px solid #374151;
+    gap: 0.5rem;
+  }
+  
+  .messageInput {
+    flex-grow: 1;
+    background-color: #1f2937;
+    border: 1px solid #374151;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+  }
+  
+  .attachButton {
     background: none;
     border: none;
-    color: #ef4444; /* red-500 */
+    color: #9ca3af;
     cursor: pointer;
+  }
+  
+  .sendButton {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+  .sendButton:disabled {
+    background-color: #60a5fa;
+    cursor: not-allowed;
+  }
+  
+  .selectedFilePreview {
+    display: flex;
+    align-items: center;
+    background-color: #1f2937;
+    padding: 0.5rem;
+    border-radius: 8px;
+    gap: 0.5rem;
+    border: 1px solid #374151;
+    flex-grow: 1;
+    justify-content: space-between;
+  }
+  
+  .removeFileButton {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+  }
+  
+  .placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0; /* Remove padding padrão */
-}
-
-.removeFileButton:hover {
-    color: #dc2626; /* red-600 */
-}
+    flex-grow: 1;
+    font-size: 1rem;
+    color: #9ca3af;
+  }
+  
+  .error {
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+  }
+  

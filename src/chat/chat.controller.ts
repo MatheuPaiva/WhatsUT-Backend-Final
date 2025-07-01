@@ -18,6 +18,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { ChatRepository } from './chat.repository';
 import { MessageDto } from './dto/create-message';
+import { CreateChatDto } from './dto/create-chat.dto'; // Importe CreateChatDto
 
 @Controller('chat')
 @ApiBearerAuth()
@@ -96,16 +97,18 @@ export class ChatController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     const id: string = req.user.id;
-    // ADICIONAR ESTES LOGS:
     console.log("sendPrivateFile (Controller): File object received by Multer:", file);
     console.log("sendPrivateFile (Controller): File path:", file.path); 
-    const messageToSend = {
-      chatType: 'private',
-      content: file.path, // Salva o caminho do arquivo como conteúdo da mensagem
+    
+    // CORREÇÃO AQUI: Explicitamente tipar messageToSend como CreateChatDto
+    const messageToSend: CreateChatDto = { 
+      chatType: 'private', 
+      content: file.path, 
       senderId: id,
       targetId: userId,
       isArquivo: true,
     };
+    
     console.log("sendPrivateFile (Controller): Message object to ChatRepository.send:", messageToSend);
     return await this.chatRepo.send(messageToSend);
   }

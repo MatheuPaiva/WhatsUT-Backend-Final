@@ -222,7 +222,15 @@ export function ChatPage() {
                                 <div key={msg.id} className={`${styles.messageBubble} ${msg.senderId === user?.id ? styles.myMessage : styles.theirMessage}`}>
                                     <div className={styles.messageContent}>
                                       {msg.isArquivo ? (
-                                        <p>📎 Arquivo: {msg.content.split('/').pop()}</p> // Exibe o nome do arquivo
+                                        <p>📎 Arquivo: <a 
+                                            href={`http://localhost:3000/${msg.content}`} // URL completa para o arquivo
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            style={{ color: 'lightblue', textDecoration: 'underline', cursor: 'pointer' }} // Estilo para parecer um link
+                                          >
+                                            {msg.content.split(/[/\\]/).pop()} {/* Divide por / ou \ para compatibilidade com Windows/Linux */}
+                                          </a>
+                                        </p>
                                       ) : (
                                         <p>{msg.content}</p>
                                       )}
