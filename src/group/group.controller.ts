@@ -1,3 +1,5 @@
+// Arquivo: src/group/group.controller.ts
+
 import {
   Controller,
   Get,
@@ -40,7 +42,7 @@ export class GroupController {
   ) {
     const { id }: { id: string } = req.user;
 
-    
+
     const members = createGroupDto.members || [];
     if (!members.includes(id)) {
       members.push(id);
@@ -153,7 +155,7 @@ export class GroupController {
 
     return await this.groupRepo.update(group);
   }
-  
+
   @Delete(':id/leave')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiResponse({ status: 204, description: 'Sair de um grupo' })
@@ -172,12 +174,12 @@ export class GroupController {
 
     if (group.adminsId.includes(userId)) {
       group.adminsId = group.adminsId.filter((id) => id !== userId);
-      
+
       if (group.adminsId.length === 0) {
         if (group.lastAdminRule === 'delete' || group.members.length === 0) {
           await this.groupRepo.delete(groupId);
           return;
-        } 
+        }
         else if (group.lastAdminRule === 'promote' && group.members.length > 0) {
           group.adminsId.push(group.members[0]);
         }
@@ -186,6 +188,29 @@ export class GroupController {
 
     await this.groupRepo.update(group);
   }
+
+  // NOVO ENDPOINT: Excluir um grupo (apenas para administradores do grupo)
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiResponse({ status: 204, description: 'Excluir um grupo' })
+  async deleteGroup(@Request() req, @Param('id') groupId: string) {
+    const { id: userId }: { id: string } = req.user; // O usuário logado
+
+    const group = await this.groupRepo.findById(groupId);
+
+    if (!group) {
+      throw new ForbiddenException('Grupo não encontrado.');
+    }
+
+    // Verifica se o usuário que está tentando excluir é um administrador do grupo
+    if (!group.adminsId.includes(userId)) {
+      throw new ForbiddenException('Apenas administradores podem excluir o grupo.');
+    }
+
+    // Se o usuário é um administrador, procede com a exclusão
+    await this.groupRepo.delete(groupId);
+  }
+
 
   @Patch('ban-user/:userId')
   @ApiResponse({ description: 'Requisitar o banimento de um usuário da aplicação (simulado)' })

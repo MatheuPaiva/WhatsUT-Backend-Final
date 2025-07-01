@@ -1,7 +1,7 @@
 // Arquivo: frontend/src/components/CreateGroupModal.tsx
 
-import React, { useState } from 'react';
-import { groupService, userService } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import * as api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 // Basic styles for the modal (you can integrate with ChatPage.module.css or create a new modal.module.css)
@@ -78,7 +78,7 @@ export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalPr
     const fetchUsers = async () => {
       if (!token) return;
       try {
-        const usersData = await userService.getUsers(token);
+        const usersData = await api.getUsers(token);
         // Filter out current user from the list
         setAllUsers(usersData.filter((u: any) => u.id !== user?.id));
       } catch (err) {
@@ -103,14 +103,13 @@ export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalPr
     setError('');
 
     try {
-      // Ensure the current user is always an admin and a member
-      const initialAdmins = selectedMembers.includes(user.id) ? selectedMembers : [...selectedMembers, user.id];
-      const initialMembers = selectedMembers.includes(user.id) ? selectedMembers : [...selectedMembers, user.id];
+      // Garante que o usuário atual (criador) é o único admin, mas sempre um membro.
+      const initialAdmins = [user.id]; // CORREÇÃO: Apenas o criador é admin inicialmente
+      const initialMembers = selectedMembers.includes(user.id) ? selectedMembers : [...selectedMembers, user.id]; // Continua garantindo que o criador esteja nos membros.
 
-
-      await groupService.createGroup(token, {
+      await api.createGroup(token, {
         name: groupName.trim(),
-        adminsId: initialAdmins,
+        adminsId: initialAdmins, // Usar o array corrigido
         members: initialMembers,
         lastAdminRule: 'promote', // Default rule for now
       });
@@ -126,9 +125,9 @@ export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalPr
   };
 
   const handleMemberSelection = (memberId: string) => {
-    setSelectedMembers(prev => 
-      prev.includes(memberId) 
-        ? prev.filter(id => id !== memberId) 
+    setSelectedMembers(prev =>
+      prev.includes(memberId)
+        ? prev.filter(id => id !== memberId)
         : [...prev, memberId]
     );
   };
@@ -138,7 +137,7 @@ export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalPr
       <div style={contentStyles}>
         <h2>Criar Novo Grupo</h2>
         {error && <p style={{ color: '#f87171', fontSize: '0.875rem', textAlign: 'center' }}>{error}</p>}
-        
+
         <div>
           <label htmlFor="groupName">Nome do Grupo:</label>
           <input

@@ -1,51 +1,80 @@
-/* ChatPage.module.css */
+/* Arquivo: frontend/src/pages/ChatPage.module.css */
 
 .chatLayout {
-    display: flex;
+    display: flex; /* Mantido como flex, conforme seu CSS atual */
     height: 100vh;
     background-color: #111827;
     color: white;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-  
-  .sidebar {
+}
+
+.sidebar {
     width: 260px;
     background-color: #1f2937;
     padding: 1rem;
     display: flex;
     flex-direction: column;
     border-right: 1px solid #374151;
-  }
-  
-  .sidebarHeader {
+}
+
+.sidebarHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
-  }
-  
-  .logoutButton {
+    /* Adicionado para acomodar o botão "Criar Grupo" abaixo do "Sair" */
+    flex-direction: column; 
+    gap: 0.8rem; /* Espaçamento entre os itens do header da sidebar */
+    padding-bottom: 1rem; /* Padding extra para separar do contactsList */
+    border-bottom: 1px solid #374151; /* Linha divisória */
+}
+
+.logoutButton {
     background-color: #ef4444;
     color: white;
     border: none;
     padding: 0.4rem 0.6rem;
     border-radius: 4px;
     cursor: pointer;
-  }
-  
-  .contactsList {
+    width: 100%; /* Ocupar largura total para o botão de sair */
+}
+
+/* NOVO ESTILO: Botão Criar Grupo */
+.createGroupButton {
+    background-color: #1d4ed8; /* Azul */
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+    width: 100%; /* Ocupar largura total */
+}
+
+.createGroupButton:hover {
+    background-color: #1e40af; /* Azul mais escuro no hover */
+}
+
+.contactsList {
     flex-grow: 1;
     overflow-y: auto;
-  }
-  
-  .listTitle {
+    padding-top: 1rem; /* Espaçamento após a linha do header */
+}
+
+.listTitle {
     font-size: 0.75rem;
     color: #9ca3af;
     margin-top: 1rem;
     text-transform: uppercase;
-  }
-  
-  .contactItem {
+}
+
+.contactItem {
     padding: 0.5rem 0.75rem;
     margin-top: 0.25rem;
     border-radius: 6px;
@@ -54,128 +83,152 @@
     align-items: center;
     gap: 0.5rem;
     color: white;
-  }
-  
-  .contactItem:hover {
+}
+
+.contactItem:hover {
     background-color: #374151;
-  }
-  
-  .active {
+}
+
+.active {
     background-color: #3b82f6;
     color: white;
-  }
-  
-  .onlineIndicator {
+}
+
+.onlineIndicator {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     background-color: #10b981;
-  }
-  
-  .offlineIndicator {
+}
+
+.offlineIndicator {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     background-color: #6b7280;
-  }
-  
-  .mainContent {
+}
+
+.mainContent {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     background-color: #111827;
-  }
-  
-  .chatHeader {
+    height: 100%; /* Garante que o mainContent ocupe 100% da altura do seu pai (chatLayout) */
+}
+
+.chatHeader {
     padding: 1rem;
     background-color: #1f2937;
     border-bottom: 1px solid #374151;
     font-size: 1.2rem;
     font-weight: bold;
-  }
-  
-  .chatWindow {
-    flex-grow: 1;
-    overflow-y: auto;
+    flex-shrink: 0; /* Impede que o cabeçalho encolha */
+    height: 3.5rem; /* Altura fixa para o cabeçalho */
+    display: flex; /* Para alinhar o texto verticalmente */
+    align-items: center;
+}
+
+.chatWindow {
+    flex-grow: 1; /* Permite que cresça e encolha */
+    overflow-y: auto; /* A barra de rolagem deve funcionar aqui */
     padding: 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-  }
-  
-  .messageBubble {
+    /* Ajuste de altura com calc() para a rolagem */
+    /* Calcula 100% da altura do pai (.mainContent) menos as alturas fixas do header e input */
+    height: calc(100% - 3.5rem - 4.5rem - 2px); /* 2px de margem de segurança */
+    min-height: 0; /* Importante para flex-grow + overflow */
+}
+
+.messageBubble {
     max-width: 70%;
     padding: 0.75rem;
     border-radius: 12px;
     position: relative;
     display: inline-block;
     word-wrap: break-word;
-  }
-  
-  .myMessage {
+    /* Para mensagens de arquivo, o estilo do link */
+    & a {
+        color: lightblue;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+}
+
+.myMessage {
     align-self: flex-end;
     background-color: #3b82f6;
     color: white;
-  }
-  
-  .theirMessage {
+}
+
+.theirMessage {
     align-self: flex-start;
     background-color: #4b5563;
     color: white;
-  }
-  
-  .messageContent p {
+}
+
+.messageContent p {
     margin: 0;
     font-size: 0.9rem;
-  }
-  
-  .messageTimestamp {
+}
+
+.messageTimestamp {
     font-size: 0.7rem;
     color: #d1d5db;
     margin-top: 4px;
     display: block;
     text-align: right;
-  }
-  
-  .messageInputArea {
+}
+
+.messageInputArea {
     display: flex;
     align-items: center;
     padding: 1rem;
     border-top: 1px solid #374151;
     gap: 0.5rem;
-  }
-  
-  .messageInput {
+    flex-shrink: 0; /* Impede que a área de input encolha */
+    height: 4.5rem; /* Altura fixa para a área de input */
+}
+
+.messageInput {
     flex-grow: 1;
     background-color: #1f2937;
     border: 1px solid #374151;
     color: white;
     padding: 0.5rem;
     border-radius: 8px;
-  }
-  
-  .attachButton {
+    height: 2.5rem; /* Altura fixa para o input */
+}
+
+.attachButton {
     background: none;
     border: none;
     color: #9ca3af;
     cursor: pointer;
-  }
-  
-  .sendButton {
+    font-size: 1.5rem; /* Ajuste o tamanho do ícone Paperclip */
+    height: 2.5rem; /* Alinha com o input */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sendButton {
     background-color: #3b82f6;
     color: white;
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
-  }
-  
-  .sendButton:disabled {
+    height: 2.5rem; /* Alinha com o input */
+}
+
+.sendButton:disabled {
     background-color: #60a5fa;
     cursor: not-allowed;
-  }
-  
-  .selectedFilePreview {
+}
+
+.selectedFilePreview {
     display: flex;
     align-items: center;
     background-color: #1f2937;
@@ -185,27 +238,283 @@
     border: 1px solid #374151;
     flex-grow: 1;
     justify-content: space-between;
-  }
-  
-  .removeFileButton {
+    height: 2.5rem; /* Alinha com o input */
+}
+
+.removeFileButton {
     background: none;
     border: none;
     color: #ef4444;
     cursor: pointer;
-  }
-  
-  .placeholder {
+}
+
+.placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-grow: 1;
     font-size: 1rem;
     color: #9ca3af;
-  }
-  
-  .error {
+    text-align: center;
+}
+
+.error {
     color: #ef4444;
     font-size: 0.8rem;
     margin-bottom: 0.5rem;
-  }
-  
+    text-align: center;
+}
+
+/* Para o estilo do link de arquivo */
+.messageBubble .messageContent a {
+    color: lightblue; /* Garante que o link seja azul */
+    text-decoration: underline; /* Sublinha o link */
+}
+
+.chatHeader {
+    padding: 1rem;
+    background-color: #1f2937;
+    border-bottom: 1px solid #374151;
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: flex; /* Adicionado para alinhamento */
+    justify-content: space-between; /* Adicionado para alinhamento */
+    align-items: center; /* Adicionado para alinhamento */
+}
+
+.manageGroupButton {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.manageGroupButton:hover {
+    background-color: #374151;
+}
+
+.pendingRequestsBadge {
+    background-color: #ef4444; /* red-500 */
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 9999px; /* bordas totalmente arredondadas */
+    margin-left: auto; /* Empurra para a direita */
+}
+
+.groupManagementSection {
+    background-color: #2d3a4b; /* Fundo escuro ligeiramente mais claro */
+    padding: 1rem;
+    border-bottom: 1px solid #374151;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.groupManagementSection h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: #f9fafb;
+}
+
+.managementCategory {
+    border: 1px solid #4b5563; /* gray-600 */
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+}
+
+.managementCategory h4 {
+    font-size: 0.9rem;
+    color: #cbd5e1; /* gray-300 */
+    margin-bottom: 0.5rem;
+}
+
+.managementList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.managementItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px dashed #374151; /* Separador leve tracejado */
+    color: #d1d5db;
+}
+
+.managementItem:last-child {
+    border-bottom: none;
+}
+
+.managementActions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.actionButton {
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.approveButton {
+    background-color: #10b981; /* green-500 */
+    color: white;
+    border: none;
+}
+
+.approveButton:hover {
+    background-color: #059669; /* green-600 */
+}
+
+.rejectButton {
+    background-color: #f59e0b; /* amber-500 */
+    color: white;
+    border: none;
+}
+
+.rejectButton:hover {
+    background-color: #d97706; /* amber-600 */
+}
+
+.banButton {
+    background-color: #ef4444; /* red-500 */
+    color: white;
+    border: none;
+}
+
+.banButton:hover {
+    background-color: #dc2626; /* red-600 */
+}
+
+.adminBadge {
+    background-color: #6366f1; /* indigo-500 */
+    color: white;
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+}
+.contactsList {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+}
+
+.createGroupButton {
+    width: calc(100% - 1rem); /* Ajusta a largura para ter padding */
+    padding: 0.75rem;
+    margin: 0.5rem; /* Margem para separar dos itens */
+    background-color: #4CAF50; /* Um verde agradável */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.createGroupButton:hover {
+    background-color: #45a049; /* Um verde um pouco mais escuro no hover */
+}
+
+/* ... (restante dos estilos) ... */
+
+.deleteGroupButton {
+    background-color: #dc2626; /* Um vermelho mais forte para exclusão */
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem; /* Um pouco maior */
+    border-radius: 8px; /* Mais arredondado */
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%; /* Ocupa toda a largura disponível */
+    box-sizing: border-box; /* Garante que padding não estoure a largura */
+    text-align: center;
+}
+
+.deleteGroupButton:hover {
+    background-color: #b91c1c; /* Vermelho ainda mais escuro no hover */
+}
+
+/* Garante que o .actionButton base não sobreponha as cores específicas de .deleteGroupButton */
+.actionButton.deleteGroupButton {
+    /* Sobrescreve as propriedades de .actionButton se necessário */
+    background-color: #dc2626;
+    color: white;
+}
+.contactsList {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+}
+
+.createGroupButton {
+    width: calc(100% - 1rem);
+    padding: 0.75rem;
+    margin: 0.5rem;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.createGroupButton:hover {
+    background-color: #45a049;
+}
+
+.manageUsersButton {
+    width: calc(100% - 1rem); /* Ocupa a largura total menos o padding */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    margin: 0.5rem;
+    background-color: #5a67d8; /* Um tom de roxo/azul */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.manageUsersButton:hover {
+    background-color: #434eac;
+}
+
+.userManagementSection {
+    background-color: #2d3a4b; /* Fundo escuro ligeiramente mais claro */
+    padding: 1rem;
+    border-bottom: 1px solid #374151;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.bannedIndicator {
+    background-color: #dc2626; /* red-600 */
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+}

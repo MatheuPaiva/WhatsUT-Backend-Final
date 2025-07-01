@@ -2,15 +2,13 @@
 
 // Função auxiliar para fazer requisições à API
 async function fetchApi(path: string, token: string | null, options: RequestInit = {}) {
-  const headers: HeadersInit = { // Use HeadersInit para tipar corretamente
+  const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...options.headers,
   };
 
-  // Adiciona o token de autorização se ele existir
   if (token) {
-    // TypeScript entenderá que headers pode ser indexado por string
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`; 
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
   const response = await fetch(`http://localhost:3000${path}`, {
@@ -23,33 +21,47 @@ async function fetchApi(path: string, token: string | null, options: RequestInit
     throw new Error(errorData.message || 'Ocorreu um erro na API');
   }
 
-  // Retorna a resposta em JSON se o corpo não estiver vazio
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.indexOf("application/json") !== -1) {
     return response.json();
   }
-  
-  return null; // Retorna null para respostas sem corpo (ex: 204 No Content)
+
+  return null;
 }
 
 // --- Funções da API ---
 
-// Busca todos os usuários
 export const getUsers = (token: string | null) => {
   return fetchApi('/users', token);
 };
 
-// Busca os grupos do usuário logado
 export const getMyGroups = (token: string | null) => {
   return fetchApi('/group/my', token);
 };
 
-// Busca as mensagens de um chat privado
+export const approveMember = (groupId: string, userIdToApprove: string, token: string) => {
+  return fetchApi(`/group/${groupId}/approve/${userIdToApprove}`, token, {
+    method: 'PATCH',
+  });
+};
+
+export const rejectMember = (groupId: string, userIdToReject: string, token: string) => {
+  return fetchApi(`/group/${groupId}/reject/${userIdToReject}`, token, {
+    method: 'PATCH',
+  });
+};
+
+export const banMember = (groupId: string, userIdToBan: string, token: string) => {
+  return fetchApi(`/group/${groupId}/ban/${userIdToBan}`, token, {
+    method: 'PATCH',
+  });
+};
+
+
 export const getPrivateMessages = (userId: string, token: string | null) => {
   return fetchApi(`/chat/private/${userId}`, token);
 };
 
-// Busca as mensagens de um chat em grupo
 export const getGroupMessages = (groupId: string, token: string | null) => {
   return fetchApi(`/chat/group/${groupId}`, token);
 };
@@ -61,45 +73,94 @@ export async function sendPrivateMessage(receiverId: string, content: string, to
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify({ menssagem: content }) // 
+    body: JSON.stringify({ menssagem: content })
   });
 
   if (!response.ok) {
     throw new Error("Erro ao enviar mensagem privada");
   }
 
-  return response.json(); // 
+  return response.json();
 }
 
-// Envia uma mensagem em grupo
 export const sendGroupMessage = (groupId: string, menssagem: string, token: string | null) => {
   return fetchApi(`/chat/group/${groupId}`, token, {
     method: 'POST',
-    body: JSON.stringify({ menssagem }), // 
+    body: JSON.stringify({ menssagem }),
   });
 };
 
-// NOVA FUNÇÃO PARA ENVIAR ARQUIVOS PRIVADOS
 export async function sendPrivateFile(userId: string, fileData: FormData, token: string) {
   const response = await fetch(`http://localhost:3000/chat/private/${userId}/file`, {
       method: 'POST',
       headers: {
-          // NÃO inclua 'Content-Type': 'multipart/form-data' aqui.
-          // O navegador adicionará isso automaticamente com o boundary correto quando você envia um FormData.
           'Authorization': `Bearer ${token}`
       },
-      body: fileData, // Passa o objeto FormData diretamente como corpo
+      body: fileData,
   });
 
   if (!response.ok) {
-      const errorData = await response.json(); // Tenta ler erro se houver
+      const errorData = await response.json();
       throw new Error(errorData.message || 'Falha ao enviar arquivo.');
   }
 
-  // A resposta do backend para o envio de arquivo é a mensagem de chat criada
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.indexOf("application/json") !== -1) {
       return response.json();
   }
-  return null; // Retorna null se não houver JSON na resposta
+  return null;
 }
+
+export async function sendGroupFile(groupId: string, fileData: FormData, token: string) {
+  const response = await fetch(`http://localhost:3000/chat/group/${groupId}/file`, {
+      method: 'POST',
+      headers: {
+          'Authorization': `Bearer ${token}`
+      },
+      body: fileData,
+  });
+
+  if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Falha ao enviar arquivo para o grupo.');
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.indexOf("application/json") !== -1) {
+      return response.json();
+  }
+  return null;
+}
+
+interface CreateGroupDto {
+  name: string;
+  adminsId: string[];
+  members: string[];
+  lastAdminRule?: 'promote' | 'delete';
+}
+
+export const createGroup = (token: string, groupData: CreateGroupDto) => {
+  return fetchApi('/group/create', token, {
+    method: 'POST',
+    body: JSON.stringify(groupData),
+  });
+};
+
+export const deleteGroup = (groupId: string, token: string) => {
+  return fetchApi(`/group/${groupId}`, token, {
+    method: 'DELETE',
+  });
+};
+
+// NOVAS FUNÇÕES: Banir e Desbanir usuário
+export const banUser = (userId: string, token: string) => {
+  return fetchApi(`/users/ban/${userId}`, token, {
+    method: 'PATCH',
+  });
+};
+
+export const unbanUser = (userId: string, token: string) => {
+  return fetchApi(`/users/unban/${userId}`, token, {
+    method: 'PATCH',
+  });
+};

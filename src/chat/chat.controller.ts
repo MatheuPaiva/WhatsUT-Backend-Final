@@ -1,4 +1,4 @@
-// Arquivo: src/chat/chat.controller.ts
+// src/chat/chat.controller.ts
 
 import {
   Controller,
@@ -18,7 +18,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { ChatRepository } from './chat.repository';
 import { MessageDto } from './dto/create-message';
-import { CreateChatDto } from './dto/create-chat.dto'; // Importe CreateChatDto
+import { CreateChatDto } from './dto/create-chat.dto';
 
 @Controller('chat')
 @ApiBearerAuth()
@@ -62,8 +62,9 @@ export class ChatController {
       senderId: id,
       targetId: groupId,
     });
-    
+
   }
+
   @Post('private/:userId/file')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -98,18 +99,66 @@ export class ChatController {
   ) {
     const id: string = req.user.id;
     console.log("sendPrivateFile (Controller): File object received by Multer:", file);
-    console.log("sendPrivateFile (Controller): File path:", file.path); 
-    
-    // CORREÇÃO AQUI: Explicitamente tipar messageToSend como CreateChatDto
-    const messageToSend: CreateChatDto = { 
-      chatType: 'private', 
-      content: file.path, 
+    console.log("sendPrivateFile (Controller): File path:", file.path);
+
+    const messageToSend: CreateChatDto = {
+      chatType: 'private',
+      content: file.path,
       senderId: id,
       targetId: userId,
       isArquivo: true,
     };
-    
+
     console.log("sendPrivateFile (Controller): Message object to ChatRepository.send:", messageToSend);
+    return await this.chatRepo.send(messageToSend);
+  }
+
+  // NOVO ENDPOINT: Enviar arquivo para um grupo
+  @Post('group/:groupId/file')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads', // Salva o arquivo no diretório 'uploads'
+        filename: (req, file, cb) => {
+          const randomName = Array(32) // Gera um nome de arquivo aleatório
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          return cb(null, `${randomName}${extname(file.originalname)}`); // Concatena com a extensão original
+        },
+      }),
+    }),
+  )
+  async sendGroupFile(
+    @Request() req,
+    @Param('groupId') groupId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const id: string = req.user.id;
+    console.log("sendGroupFile (Controller): File object received by Multer:", file);
+    console.log("sendGroupFile (Controller): File path:", file.path);
+
+    const messageToSend: CreateChatDto = {
+      chatType: 'group',
+      content: file.path, // Salva o caminho do arquivo como conteúdo da mensagem
+      senderId: id,
+      targetId: groupId,
+      isArquivo: true, // Marca a mensagem como um arquivo
+    };
+
+    console.log("sendGroupFile (Controller): Message object to ChatRepository.send:", messageToSend);
     return await this.chatRepo.send(messageToSend);
   }
 }
