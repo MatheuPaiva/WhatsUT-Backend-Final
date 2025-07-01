@@ -40,6 +40,18 @@ const inputStyles: React.CSSProperties = {
   boxSizing: 'border-box',
 };
 
+const selectStyles: React.CSSProperties = { // NOVO ESTILO: Para o select
+  padding: '0.75rem',
+  border: '1px solid #4b5563',
+  borderRadius: '0.375rem',
+  backgroundColor: '#374151',
+  color: '#f3f4f6',
+  width: '100%',
+  boxSizing: 'border-box',
+  cursor: 'pointer',
+};
+
+
 const buttonStyles: React.CSSProperties = {
   padding: '0.75rem 1.5rem',
   borderRadius: '0.375rem',
@@ -71,6 +83,8 @@ export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalPr
   const [groupName, setGroupName] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]); // To store all users for selection
+  // NOVO ESTADO: Para a regra do último admin
+  const [lastAdminRule, setLastAdminRule] = useState<'promote' | 'delete'>('promote'); // Default: promote
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -103,15 +117,14 @@ export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalPr
     setError('');
 
     try {
-      // Garante que o usuário atual (criador) é o único admin, mas sempre um membro.
-      const initialAdmins = [user.id]; // CORREÇÃO: Apenas o criador é admin inicialmente
-      const initialMembers = selectedMembers.includes(user.id) ? selectedMembers : [...selectedMembers, user.id]; // Continua garantindo que o criador esteja nos membros.
+      const initialAdmins = [user.id]; // Apenas o criador é admin inicialmente
+      const initialMembers = selectedMembers.includes(user.id) ? selectedMembers : [...selectedMembers, user.id]; // Garante que o criador esteja nos membros.
 
       await api.createGroup(token, {
         name: groupName.trim(),
-        adminsId: initialAdmins, // Usar o array corrigido
+        adminsId: initialAdmins,
         members: initialMembers,
-        lastAdminRule: 'promote', // Default rule for now
+        lastAdminRule: lastAdminRule, // ATUALIZADO: Usar o estado selecionado pelo usuário
       });
 
       onGroupCreated();
@@ -170,6 +183,21 @@ export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalPr
               ))
             )}
           </div>
+        </div>
+
+        {/* NOVO CAMPO: Seleção da regra do último admin */}
+        <div>
+          <label htmlFor="lastAdminRule">Quando o último admin sair:</label>
+          <select
+            id="lastAdminRule"
+            value={lastAdminRule}
+            onChange={(e) => setLastAdminRule(e.target.value as 'promote' | 'delete')}
+            style={selectStyles}
+            disabled={isLoading}
+          >
+            <option value="promote">Promover membro mais antigo a admin</option>
+            <option value="delete">Excluir o grupo</option>
+          </select>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
