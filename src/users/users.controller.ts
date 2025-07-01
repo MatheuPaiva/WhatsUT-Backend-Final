@@ -1,6 +1,6 @@
 // Arquivo: src/users/users.controller.ts
 
-import { Controller, Get, UseGuards, Request, Patch, Param, HttpCode, HttpStatus, ForbiddenException } from '@nestjs/common'; // Adicionado Patch, Param, HttpCode, HttpStatus, ForbiddenException
+import { Controller, Get, UseGuards, Request, Patch, Param, HttpCode, HttpStatus, ForbiddenException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserRepository } from './csv-user.repository';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';

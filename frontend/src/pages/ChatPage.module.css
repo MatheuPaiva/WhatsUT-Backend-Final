@@ -1,7 +1,7 @@
 /* Arquivo: frontend/src/pages/ChatPage.module.css */
 
 .chatLayout {
-    display: flex; /* Mantido como flex, conforme seu CSS atual */
+    display: flex;
     height: 100vh;
     background-color: #111827;
     color: white;
@@ -15,6 +15,7 @@
     display: flex;
     flex-direction: column;
     border-right: 1px solid #374151;
+    overflow-y: auto;
 }
 
 .sidebarHeader {
@@ -22,11 +23,6 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
-    /* Adicionado para acomodar o botão "Criar Grupo" abaixo do "Sair" */
-    flex-direction: column; 
-    gap: 0.8rem; /* Espaçamento entre os itens do header da sidebar */
-    padding-bottom: 1rem; /* Padding extra para separar do contactsList */
-    border-bottom: 1px solid #374151; /* Linha divisória */
 }
 
 .logoutButton {
@@ -36,35 +32,57 @@
     padding: 0.4rem 0.6rem;
     border-radius: 4px;
     cursor: pointer;
-    width: 100%; /* Ocupar largura total para o botão de sair */
 }
 
-/* NOVO ESTILO: Botão Criar Grupo */
-.createGroupButton {
-    background-color: #1d4ed8; /* Azul */
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: bold;
+.startConversationButton {
+    width: calc(100% - 1rem);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    transition: background-color 0.2s;
-    width: 100%; /* Ocupar largura total */
+    padding: 0.75rem;
+    margin: 0.5rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-top: 1rem;
 }
 
-.createGroupButton:hover {
-    background-color: #1e40af; /* Azul mais escuro no hover */
+.startConversationButton:hover {
+    background-color: #2563eb;
+}
+
+.manageUsersButton {
+    width: calc(100% - 1rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    margin: 0.5rem;
+    background-color: #5a67d8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.manageUsersButton:hover {
+    background-color: #434eac;
 }
 
 .contactsList {
     flex-grow: 1;
     overflow-y: auto;
-    padding-top: 1rem; /* Espaçamento após a linha do header */
+    padding: 0.5rem 0;
 }
 
 .listTitle {
@@ -72,6 +90,7 @@
     color: #9ca3af;
     margin-top: 1rem;
     text-transform: uppercase;
+    padding-left: 0.5rem;
 }
 
 .contactItem {
@@ -82,7 +101,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: white;
+    color: rgb(255, 255, 255);
 }
 
 .contactItem:hover {
@@ -108,12 +127,40 @@
     background-color: #6b7280;
 }
 
+.pendingRequestsBadge {
+    background-color: #ef4444;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    margin-left: auto;
+}
+
+.createGroupButton {
+    width: calc(100% - 1rem);
+    padding: 0.75rem;
+    margin: 0.5rem;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.createGroupButton:hover {
+    background-color: #45a049;
+}
+
 .mainContent {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     background-color: #111827;
-    height: 100%; /* Garante que o mainContent ocupe 100% da altura do seu pai (chatLayout) */
+    min-width: 0;
 }
 
 .chatHeader {
@@ -122,23 +169,192 @@
     border-bottom: 1px solid #374151;
     font-size: 1.2rem;
     font-weight: bold;
-    flex-shrink: 0; /* Impede que o cabeçalho encolha */
-    height: 3.5rem; /* Altura fixa para o cabeçalho */
-    display: flex; /* Para alinhar o texto verticalmente */
+    display: flex;
+    justify-content: space-between;
     align-items: center;
 }
 
+.manageGroupButton {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.manageGroupButton:hover {
+    background-color: #374151;
+}
+
+.groupManagementSection {
+    background-color: #2d3a4b;
+    padding: 1rem;
+    border-bottom: 1px solid #374151;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.groupManagementSection h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: #f9fafb;
+}
+
+.managementCategory {
+    border: 1px solid #4b5563;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+}
+
+.managementCategory h4 {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    margin-bottom: 0.5rem;
+}
+
+.managementList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.managementItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px dashed #374151;
+    color: #d1d5db;
+}
+
+.managementItem:last-child {
+    border-bottom: none;
+}
+
+.managementActions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.actionButton {
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.approveButton {
+    background-color: #10b981;
+    color: white;
+    border: none;
+}
+
+.approveButton:hover {
+    background-color: #059669;
+}
+
+.rejectButton {
+    background-color: #f59e0b;
+    color: white;
+    border: none;
+}
+
+.rejectButton:hover {
+    background-color: #d97706;
+}
+
+.banButton {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+}
+
+.banButton:hover {
+    background-color: #dc2626;
+}
+
+.adminBadge {
+    background-color: #6366f1;
+    color: white;
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+}
+
+.deleteGroupButton {
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.deleteGroupButton:hover {
+    background-color: #b91c1c;
+}
+
+.actionButton.deleteGroupButton {
+    background-color: #dc2626;
+    color: white;
+}
+
+.userManagementSection {
+    background-color: #2d3a4b;
+    padding: 1rem;
+    border-bottom: 1px solid #374151;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.bannedIndicator {
+    background-color: #dc2626;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 9999px;
+    margin-left: 0.5rem;
+    font-weight: bold;
+}
+
 .chatWindow {
-    flex-grow: 1; /* Permite que cresça e encolha */
-    overflow-y: auto; /* A barra de rolagem deve funcionar aqui */
+    flex-grow: 1;
+    overflow-y: auto;
     padding: 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    /* Ajuste de altura com calc() para a rolagem */
-    /* Calcula 100% da altura do pai (.mainContent) menos as alturas fixas do header e input */
-    height: calc(100% - 3.5rem - 4.5rem - 2px); /* 2px de margem de segurança */
-    min-height: 0; /* Importante para flex-grow + overflow */
+}
+
+.messageSenderName {
+    font-size: 0.75rem;
+    color: #07e752;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.myMessage .messageSenderName {
+    text-align: right;
+}
+
+.theirMessage .messageSenderName {
+    text-align: left;
 }
 
 .messageBubble {
@@ -148,12 +364,6 @@
     position: relative;
     display: inline-block;
     word-wrap: break-word;
-    /* Para mensagens de arquivo, o estilo do link */
-    & a {
-        color: lightblue;
-        text-decoration: underline;
-        cursor: pointer;
-    }
 }
 
 .myMessage {
@@ -165,7 +375,7 @@
 .theirMessage {
     align-self: flex-start;
     background-color: #4b5563;
-    color: white;
+    color: rgb(255, 255, 255);
 }
 
 .messageContent p {
@@ -187,8 +397,6 @@
     padding: 1rem;
     border-top: 1px solid #374151;
     gap: 0.5rem;
-    flex-shrink: 0; /* Impede que a área de input encolha */
-    height: 4.5rem; /* Altura fixa para a área de input */
 }
 
 .messageInput {
@@ -198,7 +406,6 @@
     color: white;
     padding: 0.5rem;
     border-radius: 8px;
-    height: 2.5rem; /* Altura fixa para o input */
 }
 
 .attachButton {
@@ -206,11 +413,6 @@
     border: none;
     color: #9ca3af;
     cursor: pointer;
-    font-size: 1.5rem; /* Ajuste o tamanho do ícone Paperclip */
-    height: 2.5rem; /* Alinha com o input */
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .sendButton {
@@ -220,7 +422,6 @@
     padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
-    height: 2.5rem; /* Alinha com o input */
 }
 
 .sendButton:disabled {
@@ -238,7 +439,6 @@
     border: 1px solid #374151;
     flex-grow: 1;
     justify-content: space-between;
-    height: 2.5rem; /* Alinha com o input */
 }
 
 .removeFileButton {
@@ -262,259 +462,253 @@
     color: #ef4444;
     font-size: 0.8rem;
     margin-bottom: 0.5rem;
-    text-align: center;
 }
 
-/* Para o estilo do link de arquivo */
-.messageBubble .messageContent a {
-    color: lightblue; /* Garante que o link seja azul */
-    text-decoration: underline; /* Sublinha o link */
+/* Estilos para o modal/seção "Iniciar Conversa" */
+.startConversationModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+    padding: 2rem;
+    box-sizing: border-box;
 }
 
-.chatHeader {
-    padding: 1rem;
+.startConversationModal h3 {
+    color: #f9fafb;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.userListContainer {
     background-color: #1f2937;
-    border-bottom: 1px solid #374151;
-    font-size: 1.2rem;
-    font-weight: bold;
-    display: flex; /* Adicionado para alinhamento */
-    justify-content: space-between; /* Adicionado para alinhamento */
-    align-items: center; /* Adicionado para alinhamento */
+    border-radius: 0.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    width: 90%;
+    max-width: 400px;
+    padding: 1rem;
+    border: 1px solid #374151;
 }
 
-.manageGroupButton {
-    background: none;
-    border: none;
-    color: #9ca3af;
+.startConversationModal .contactItem {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.25rem;
+    border-radius: 6px;
     cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: white;
     transition: background-color 0.2s;
 }
 
-.manageGroupButton:hover {
+.startConversationModal .contactItem:hover {
     background-color: #374151;
 }
 
-.pendingRequestsBadge {
-    background-color: #ef4444; /* red-500 */
-    color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 9999px; /* bordas totalmente arredondadas */
-    margin-left: auto; /* Empurra para a direita */
+.startConversationModal .bannedUserItem {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
-.groupManagementSection {
-    background-color: #2d3a4b; /* Fundo escuro ligeiramente mais claro */
-    padding: 1rem;
-    border-bottom: 1px solid #374151;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.startConversationModal .bannedUserItem:hover {
+    background-color: #1f2937;
 }
 
-.groupManagementSection h3 {
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-    color: #f9fafb;
-}
-
-.managementCategory {
-    border: 1px solid #4b5563; /* gray-600 */
-    border-radius: 0.5rem;
-    padding: 0.75rem;
-}
-
-.managementCategory h4 {
-    font-size: 0.9rem;
-    color: #cbd5e1; /* gray-300 */
-    margin-bottom: 0.5rem;
-}
-
-.managementList {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.managementItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.4rem 0;
-    border-bottom: 1px dashed #374151; /* Separador leve tracejado */
-    color: #d1d5db;
-}
-
-.managementItem:last-child {
-    border-bottom: none;
-}
-
-.managementActions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.actionButton {
-    padding: 0.3rem 0.6rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-
-.approveButton {
-    background-color: #10b981; /* green-500 */
+.closeModalButton {
+    background-color: #ef4444;
     color: white;
     border: none;
-}
-
-.approveButton:hover {
-    background-color: #059669; /* green-600 */
-}
-
-.rejectButton {
-    background-color: #f59e0b; /* amber-500 */
-    color: white;
-    border: none;
-}
-
-.rejectButton:hover {
-    background-color: #d97706; /* amber-600 */
-}
-
-.banButton {
-    background-color: #ef4444; /* red-500 */
-    color: white;
-    border: none;
-}
-
-.banButton:hover {
-    background-color: #dc2626; /* red-600 */
-}
-
-.adminBadge {
-    background-color: #6366f1; /* indigo-500 */
-    color: white;
-    font-size: 0.6rem;
-    padding: 2px 8px;
-    border-radius: 9999px;
-    margin-left: 0.5rem;
-}
-.contactsList {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 0.5rem 0;
-}
-
-.createGroupButton {
-    width: calc(100% - 1rem); /* Ajusta a largura para ter padding */
-    padding: 0.75rem;
-    margin: 0.5rem; /* Margem para separar dos itens */
-    background-color: #4CAF50; /* Um verde agradável */
-    color: white;
-    border: none;
+    padding: 0.75rem 1.5rem;
     border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
     font-weight: bold;
+    margin-top: 1.5rem;
     transition: background-color 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.createGroupButton:hover {
-    background-color: #45a049; /* Um verde um pouco mais escuro no hover */
-}
-
-/* ... (restante dos estilos) ... */
-
-.deleteGroupButton {
-    background-color: #dc2626; /* Um vermelho mais forte para exclusão */
-    color: white;
-    border: none;
-    padding: 0.75rem 1rem; /* Um pouco maior */
-    border-radius: 8px; /* Mais arredondado */
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    width: 100%; /* Ocupa toda a largura disponível */
-    box-sizing: border-box; /* Garante que padding não estoure a largura */
-    text-align: center;
-}
-
-.deleteGroupButton:hover {
-    background-color: #b91c1c; /* Vermelho ainda mais escuro no hover */
-}
-
-/* Garante que o .actionButton base não sobreponha as cores específicas de .deleteGroupButton */
-.actionButton.deleteGroupButton {
-    /* Sobrescreve as propriedades de .actionButton se necessário */
+.closeModalButton:hover {
     background-color: #dc2626;
-    color: white;
-}
-.contactsList {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 0.5rem 0;
 }
 
-.createGroupButton {
-    width: calc(100% - 1rem);
-    padding: 0.75rem;
-    margin: 0.5rem;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: bold;
-    transition: background-color 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
+/* ----------------------------------------------------------- */
+/* NOVAS REGRAS PARA AJUSTE EM TELAS GRANDES (>= 1440px) */
+/* ----------------------------------------------------------- */
 
-.createGroupButton:hover {
-    background-color: #45a049;
-}
+@media (min-width: 1440px) {
+    .sidebar {
+        width: 220px; /* Sidebar um pouco mais estreita */
+        padding: 0.75rem; /* Padding ligeiramente menor */
+    }
 
-.manageUsersButton {
-    width: calc(100% - 1rem); /* Ocupa a largura total menos o padding */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem;
-    margin: 0.5rem;
-    background-color: #5a67d8; /* Um tom de roxo/azul */
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: bold;
-    transition: background-color 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
+    .sidebarHeader h3 {
+        font-size: 1.05rem; /* Título Bem-vindo menor */
+    }
 
-.manageUsersButton:hover {
-    background-color: #434eac;
-}
+    .logoutButton {
+        padding: 0.3rem 0.5rem; /* Botão Sair menor */
+        font-size: 0.8rem;
+    }
 
-.userManagementSection {
-    background-color: #2d3a4b; /* Fundo escuro ligeiramente mais claro */
-    padding: 1rem;
-    border-bottom: 1px solid #374151;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
+    .startConversationButton,
+    .manageUsersButton,
+    .createGroupButton {
+        padding: 0.6rem; /* Botões menores */
+        font-size: 0.9rem;
+    }
 
-.bannedIndicator {
-    background-color: #dc2626; /* red-600 */
-    color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 9999px;
-    margin-left: 0.5rem;
+    .contactsList {
+        padding: 0.4rem 0; /* Padding da lista menor */
+    }
+
+    .listTitle {
+        font-size: 0.7rem; /* Título da lista menor */
+    }
+
+    .contactItem {
+        padding: 0.4rem 0.6rem; /* Itens da lista menores */
+        font-size: 0.9rem;
+        gap: 0.4rem; /* Espaçamento menor */
+    }
+
+    .onlineIndicator,
+    .offlineIndicator {
+        width: 8px; /* Indicadores menores */
+        height: 8px;
+    }
+
+    .pendingRequestsBadge,
+    .bannedIndicator,
+    .adminBadge {
+        font-size: 0.6rem; /* Badges menores */
+        padding: 1px 5px;
+    }
+
+    .chatHeader {
+        padding: 0.8rem; /* Cabeçalho do chat menor */
+        font-size: 1.1rem;
+    }
+
+    .manageGroupButton {
+        padding: 0.4rem; /* Botão de gerenciamento de grupo menor */
+    }
+
+    .groupManagementSection,
+    .userManagementSection {
+        padding: 0.8rem; /* Seções de gerenciamento menores */
+        gap: 0.8rem;
+    }
+
+    .groupManagementSection h3,
+    .userManagementSection h3 {
+        font-size: 1rem; /* Títulos menores nas seções de gerenciamento */
+    }
+
+    .managementCategory {
+        padding: 0.6rem; /* Categorias menores */
+    }
+
+    .managementCategory h4 {
+        font-size: 0.85rem; /* Títulos menores das categorias */
+    }
+
+    .managementItem {
+        padding: 0.3rem 0; /* Itens das listas de gerenciamento menores */
+        font-size: 0.8rem;
+    }
+
+    .actionButton {
+        padding: 0.25rem 0.5rem; /* Botões de ação menores */
+        font-size: 0.7rem;
+    }
+
+    .deleteGroupButton {
+        padding: 0.6rem 0.8rem; /* Botão de exclusão menor */
+        font-size: 0.9rem;
+    }
+
+    .chatWindow {
+        padding: 0.8rem; /* Padding da janela de chat menor */
+        gap: 0.4rem; /* Espaçamento entre mensagens menor */
+    }
+
+    .messageSenderName {
+        font-size: 0.7rem; /* Nome do remetente menor */
+    }
+
+    .messageBubble {
+        max-width: 65%; /* Bolhas de mensagem ligeiramente mais estreitas */
+        padding: 0.6rem; /* Padding da bolha menor */
+        border-radius: 10px; /* Borda ligeiramente menor */
+    }
+
+    .messageContent p {
+        font-size: 0.8rem; /* Conteúdo da mensagem menor */
+    }
+
+    .messageTimestamp {
+        font-size: 0.6rem; /* Timestamp menor */
+    }
+
+    .messageInputArea {
+        padding: 0.8rem; /* Área de input menor */
+        gap: 0.4rem;
+    }
+
+    .messageInput {
+        padding: 0.4rem; /* Input de mensagem menor */
+        font-size: 0.8rem;
+    }
+
+    .attachButton {
+        padding: 0.2rem; /* Botão de anexo menor */
+    }
+
+    .sendButton {
+        padding: 0.4rem 0.8rem; /* Botão de envio menor */
+        font-size: 0.9rem;
+    }
+
+    .selectedFilePreview {
+        padding: 0.4rem; /* Preview de arquivo menor */
+        font-size: 0.8rem;
+    }
+
+    .removeFileButton svg { /* Ajustar o tamanho do ícone X dentro do botão */
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Ajustes para o modal de iniciar conversa */
+    .startConversationModal h3 {
+        font-size: 1.3rem; /* Título do modal menor */
+        margin-bottom: 1rem;
+    }
+
+    .userListContainer {
+        max-height: 60vh; /* Altura máxima do container da lista de usuários no modal */
+        width: 80%; /* Largura um pouco menor */
+        max-width: 350px;
+        padding: 0.8rem;
+    }
+
+    .startConversationModal .contactItem {
+        padding: 0.6rem 0.8rem; /* Itens da lista no modal menores */
+        font-size: 0.85rem;
+        gap: 0.6rem;
+    }
+
+    .closeModalButton {
+        padding: 0.6rem 1.2rem; /* Botão fechar modal menor */
+        font-size: 0.9rem;
+    }
 }

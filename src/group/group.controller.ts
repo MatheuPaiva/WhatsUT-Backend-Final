@@ -189,12 +189,11 @@ export class GroupController {
     await this.groupRepo.update(group);
   }
 
-  // NOVO ENDPOINT: Excluir um grupo (apenas para administradores do grupo)
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiResponse({ status: 204, description: 'Excluir um grupo' })
   async deleteGroup(@Request() req, @Param('id') groupId: string) {
-    const { id: userId }: { id: string } = req.user; // O usuário logado
+    const { id: userId }: { id: string } = req.user;
 
     const group = await this.groupRepo.findById(groupId);
 
@@ -202,12 +201,10 @@ export class GroupController {
       throw new ForbiddenException('Grupo não encontrado.');
     }
 
-    // Verifica se o usuário que está tentando excluir é um administrador do grupo
     if (!group.adminsId.includes(userId)) {
       throw new ForbiddenException('Apenas administradores podem excluir o grupo.');
     }
 
-    // Se o usuário é um administrador, procede com a exclusão
     await this.groupRepo.delete(groupId);
   }
 

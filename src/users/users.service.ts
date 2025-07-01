@@ -1,10 +1,10 @@
 // Arquivo: src/users/users.service.ts
 
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common'; // Adicionado NotFoundException
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserRepository } from './csv-user.repository';
 import * as bcrypt from 'bcrypt';
-// This should be a real class/interface representing a user entity
+import { User } from './entities/users.entity'; // NOVO: Importar a interface User para tipagem
 
 @Injectable()
 export class UsersService {
@@ -28,7 +28,7 @@ export class UsersService {
   }
 
   // NOVO MÉTODO: Para atualizar o status de banimento de um usuário
-  async updateBanStatus(userId: string, bannedStatus: boolean) {
+  async updateBanStatus(userId: string, bannedStatus: boolean): Promise<{ message: string }> {
     const user = (await this.usersRepo.findAll()).find(u => u.id === userId); // Encontra o usuário pelo ID
     if (!user) {
       throw new NotFoundException('Usuário não encontrado.');
