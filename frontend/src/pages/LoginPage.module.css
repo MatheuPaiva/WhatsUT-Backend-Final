@@ -1,0 +1,212 @@
+/* Define a fonte Inter como padrão para a página inteira */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.container {
+    min-height: 100vh;
+    background-color: #f8fafc; /* Cor de fundo mais suave */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.grid {
+    width: 100%;
+    max-width: 64rem; /* max-w-6xl */
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4rem; /* Aumenta o espaçamento */
+    align-items: center;
+}
+
+@media (min-width: 1024px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.infoSide {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    text-align: center;
+}
+
+@media (min-width: 1024px) {
+    .infoSide {
+        text-align: left;
+    }
+}
+
+.title {
+    font-size: 2.5rem; /* Aumenta o título */
+    font-weight: 800; /* Extra-bold */
+    color: #1e293b;
+}
+
+.title span {
+    color: #2563eb; /* Azul para destaque */
+}
+
+.description {
+    font-size: 1.125rem;
+    color: #475569;
+    line-height: 1.75;
+}
+
+.featuresGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    padding-top: 1rem;
+}
+
+.feature {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.iconWrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.feature h3 {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1e293b;
+}
+
+.feature p {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.formContainer {
+    width: 100%;
+    max-width: 26rem; /* max-w-sm */
+    margin: auto;
+}
+
+.card {
+    background-color: white;
+    border-radius: 1rem; /* Bordas mais arredondadas */
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15); /* Sombra mais suave e pronunciada */
+    overflow: hidden; /* Garante que os filhos não "vazem" */
+}
+
+.cardContent {
+    padding: 2.5rem; /* Mais padding */
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.formHeader {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.formIcon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #eff6ff; /* Fundo do ícone azul claro */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb; /* Ícone azul */
+}
+
+.formTitle {
+    font-size: 1.875rem;
+    font-weight: 700;
+}
+
+.formDescription {
+    color: #64748b;
+}
+
+.inputGroup {
+    position: relative; /* Necessário para posicionar o ícone dentro */
+}
+
+.input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    box-sizing: border-box;
+    margin-bottom: 1rem;
+    padding-right: 2.5rem; /* Espaço para o ícone */
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background-color: #f8fafc; /* Fundo do input mais suave */
+}
+
+.input::placeholder {
+    color: #94a3b8;
+}
+
+.inputIcon {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.button {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    color: white;
+    background-color: #2563eb;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.button:hover {
+    background-color: #1d4ed8;
+}
+
+.button:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+}
+
+.error {
+    text-align: center;
+    color: #dc2626;
+    font-size: 0.875rem;
+}
+
+.toggleContainer {
+    text-align: center;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.toggleButton {
+    font-weight: 600;
+    color: #2563eb;
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 0.25rem;
+}
+
+.toggleButton:hover {
+    text-decoration: underline;
+}

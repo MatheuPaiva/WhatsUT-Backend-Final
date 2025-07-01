@@ -14,7 +14,8 @@ export class AuthService {
   ) {}
 
   async register(createUser: CreateUserDto) {
-    return this.usersService.create(createUser);
+    const createdUsername = await this.usersService.create(createUser);
+    return { message: 'Usuário registrado com sucesso!', user: createdUsername };
   }
 
   async signIn(username: string, pass: string) {
