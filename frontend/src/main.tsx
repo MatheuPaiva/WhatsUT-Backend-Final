@@ -7,6 +7,7 @@ import App from './App'; // 2. Remova a extensão .tsx
 import './index.css';
 import { AuthProvider } from './contexts/AuthContext'; // 3. Remova a extensão .tsx
 
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter> {/* 4. Mova o BrowserRouter para cá */}

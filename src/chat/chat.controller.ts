@@ -1,3 +1,5 @@
+// Arquivo: src/chat/chat.controller.ts
+
 import {
   Controller,
   Get,
@@ -94,39 +96,17 @@ export class ChatController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     const id: string = req.user.id;
-    return await this.chatRepo.send({
+    // ADICIONAR ESTES LOGS:
+    console.log("sendPrivateFile (Controller): File object received by Multer:", file);
+    console.log("sendPrivateFile (Controller): File path:", file.path); 
+    const messageToSend = {
       chatType: 'private',
       content: file.path, // Salva o caminho do arquivo como conteúdo da mensagem
       senderId: id,
       targetId: userId,
       isArquivo: true,
-    });
+    };
+    console.log("sendPrivateFile (Controller): Message object to ChatRepository.send:", messageToSend);
+    return await this.chatRepo.send(messageToSend);
   }
 }
-  
-
-  // @Post()
-  // create(@Body() createChatDto: CreateChatDto) {
-  //   return this.chatService.create(createChatDto);
-  // }
-
-  // @Get()
-  // findAll() {
-  //   return this.chatService.findAll();
-  // }
-
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.chatService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateChatDto: UpdateChatDto) {
-  //   return this.chatService.update(+id, updateChatDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.chatService.remove(+id);
-  // }
-

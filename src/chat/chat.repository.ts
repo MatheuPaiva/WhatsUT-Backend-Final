@@ -1,3 +1,5 @@
+// Arquivo: src/chat/chat.repository.ts
+
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -14,47 +16,77 @@ export const CSV_HEADERS_CHAT =
 @Injectable()
 export class ChatRepository {
   async send(message: CreateChatDto): Promise<Chat> {
-    
+    console.log("Attempting to send message:", message); // Log de depuração
+
     const chat: Chat = {
       ...message,
       id: v4(),
       timestamp: new Date(),
     };
 
-    const rowData = {
-      ...chat,
-      timestamp: chat.timestamp.toISOString(),
-      isArquivo: chat.isArquivo ? 'true' : 'false',
-    };
+    // ALTERAÇÃO CRÍTICA AQUI: Construindo um array de valores na ordem exata do CSV_HEADERS_CHAT
+    const rowValues = [
+      chat.id,
+      chat.senderId,
+      chat.content,
+      chat.timestamp.toISOString(), // Garante que a data seja uma string ISO
+      chat.chatType,
+      chat.targetId,
+      chat.isArquivo ? 'true' : 'false', // Garante que seja 'true' ou 'false' em string
+    ];
+
+    console.log("Row values to write:", rowValues); // Log de depuração
 
     await new Promise<void>((resolve, reject) => {
       const stream = fs.createWriteStream(CSV_FILE_CHAT, { flags: 'a' });
-      writeToStream(stream, [rowData], {
-        headers: false,
+      writeToStream(stream, [rowValues], { // Passa o array de valores diretamente
+        headers: false, // Continua false, pois o cabeçalho é gerenciado por ensureCsvFileExists
         includeEndRowDelimiter: true,
       })
-        .on('error', reject)
-        .on('finish', () => resolve());
+        .on('error', (err) => {
+          console.error("Error writing to CSV:", err);
+          reject(err);
+        })
+        .on('finish', () => {
+          console.log("Message successfully written to CSV.");
+          resolve();
+        });
     });
 
+    console.log("Message saved:", chat);
     return chat;
   }
 
   async findPrivateChat(userA: string, userB: string): Promise<Chat[]> {
+    console.log(`findPrivateChat: userA=${userA}, userB=${userB}`);
     const messages = await this.readAllMessages();
-    return messages.filter(
-      (m) =>
-        m.chatType === 'private' &&
-        ((m.senderId === userA && m.targetId === userB) ||
-          (m.senderId === userB && m.targetId === userA)),
+    console.log("findPrivateChat: All messages read from CSV:", messages);
+    const filteredMessages = messages.filter(
+      (m) => {
+        const isMatch = m.chatType === 'private' &&
+          ((m.senderId === userA && m.targetId === userB) ||
+           (m.senderId === userB && m.targetId === userA));
+        console.log(`  - Checking message: id=${m.id}, sender=${m.senderId}, target=${m.targetId}, type=${m.chatType}, isMatch=${isMatch}`);
+        return isMatch;
+      }
     );
+    console.log("findPrivateChat: Filtered messages:", filteredMessages);
+    return filteredMessages;
   }
 
   async findGroupChat(groupId: string): Promise<Chat[]> {
+    console.log(`findGroupChat: groupId=${groupId}`);
     const messages = await this.readAllMessages();
-    return messages.filter(
-      (m) => m.chatType === 'group' && m.targetId === groupId,
+    console.log("findGroupChat: All messages read from CSV:", messages);
+    const filteredMessages = messages.filter(
+      (m) => {
+        const isMatch = m.chatType === 'group' && m.targetId === groupId;
+        console.log(`  - Checking message: id=${m.id}, sender=${m.senderId}, target=${m.targetId}, type=${m.chatType}, isMatch=${isMatch}`);
+        return isMatch;
+      }
     );
+    console.log("findGroupChat: Filtered messages:", filteredMessages);
+    return filteredMessages;
   }
 
   private async readAllMessages(): Promise<Chat[]> {
@@ -62,8 +94,12 @@ export class ChatRepository {
       const results: Chat[] = [];
       fs.createReadStream(CSV_FILE_CHAT)
         .pipe(parse({ headers: true }))
-        .on('error', reject)
+        .on('error', (err) => {
+          console.error("Error parsing CSV:", err);
+          reject(err);
+        })
         .on('data', (row) => {
+          console.log("readAllMessages: Row data from CSV:", row); 
           results.push({
             id: row.id,
             senderId: row.senderId,
@@ -74,7 +110,10 @@ export class ChatRepository {
             isArquivo: row.isArquivo === 'true',
           });
         })
-        .on('end', () => resolve(results));
+        .on('end', () => {
+          console.log("readAllMessages: Finished reading. Total messages:", results.length);
+          resolve(results);
+        });
     });
   }
 }

@@ -1,7 +1,10 @@
+// Arquivo: frontend/src/pages/ChatPage.tsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './ChatPage.module.css';
 import { useAuth } from '../contexts/AuthContext';
 import * as api from '../services/api';
+import { Paperclip, X } from 'lucide-react'; // Importe o ícone X para remover o arquivo
 
 // Interfaces para definir a estrutura dos nossos dados
 interface User {
@@ -20,13 +23,14 @@ interface ChatMessage {
   id: string;
   senderId: string;
   content: string;
-  timestamp: string;
-  isArquivo?: boolean;
+  timestamp: string; // Isso espera uma string ISO
+  isArquivo?: boolean; // Adicionado para indicar se é um arquivo
 }
 
 export function ChatPage() {
     const { user, token, logout } = useAuth();
     const chatWindowRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null); // Referência para o input de arquivo
 
     // Estados para gerenciar a UI e os dados
     const [users, setUsers] = useState<User[]>([]);
@@ -35,6 +39,7 @@ export function ChatPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [error, setError] = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null); // NOVO ESTADO para o arquivo selecionado
 
     // Efeito para buscar os dados da barra lateral (usuários e grupos)
     useEffect(() => {
@@ -65,6 +70,9 @@ export function ChatPage() {
                 const messagesData = activeChat.type === 'private'
                     ? await api.getPrivateMessages(activeChat.id, token)
                     : await api.getGroupMessages(activeChat.id, token);
+                
+                console.log("Mensagens recebidas do backend:", messagesData); 
+
                 setMessages(messagesData);
             } catch (err) {
                 console.error("Falha ao buscar mensagens", err);
@@ -95,24 +103,70 @@ export function ChatPage() {
         setActiveChat(chat);
         setMessages([]); // Limpa as mensagens antigas para evitar um "flash" de conteúdo
         setError('');
+        setSelectedFile(null); // Limpa arquivo selecionado ao mudar de chat
+        setNewMessage(''); // Limpa mensagem de texto
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''; // Limpa o input de arquivo nativo
+        }
     };
 
-    // Função para lidar com o envio de novas mensagens
+    // Função para lidar com o envio de novas mensagens (texto ou arquivo)
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Se houver um arquivo selecionado, prioriza o envio do arquivo
+        if (selectedFile) {
+            if (!activeChat || !user || !token) return; // Precisa de token para upload
+
+            const formData = new FormData();
+            formData.append('file', selectedFile); // 'file' deve corresponder ao nome do campo no backend (@UploadedFile('file'))
+
+            // Atualização Otimista para arquivo
+            const tempFileMessage: ChatMessage = {
+                id: `temp-file-${Date.now()}`,
+                senderId: user.id,
+                content: selectedFile.name, // Exibe o nome do arquivo otimisticamente
+                timestamp: new Date().toISOString(),
+                isArquivo: true,
+            };
+            setMessages(prevMessages => [...prevMessages, tempFileMessage]);
+
+            try {
+                if (activeChat.type === 'private') {
+                    await api.sendPrivateFile(activeChat.id, formData, token); // Chama nova função da API
+                } else {
+                    // TODO: Implementar upload de arquivo para grupo se necessário no backend
+                    console.warn("Envio de arquivo para grupos ainda não implementado no backend.");
+                    setError("Envio de arquivo para grupos não suportado.");
+                    setMessages(prev => prev.filter(m => m.id !== tempFileMessage.id)); // Remove otimista se não suportado
+                    return;
+                }
+                setSelectedFile(null); // Limpa o estado do arquivo selecionado
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = ''; // Limpa o input de arquivo nativo
+                }
+            } catch (err) {
+                console.error("Erro ao enviar arquivo:", err);
+                setError("Falha no envio do arquivo.");
+                setMessages(prev => prev.filter(m => m.id !== tempFileMessage.id)); // Remove otimista em caso de erro
+            }
+            return; // Sai da função após tentar enviar o arquivo
+        }
+
+        // Lógica para enviar mensagem de texto (existente)
         if (!newMessage.trim() || !activeChat || !user) return;
 
         const messageContent = newMessage;
         setNewMessage(''); // Limpa o input imediatamente
 
         // Atualização Otimista: mostra a mensagem na tela antes mesmo da confirmação da API
-        const tempMessage: ChatMessage = {
+        const tempTextMessage: ChatMessage = {
             id: `temp-${Date.now()}`,
             senderId: user.id,
             content: messageContent,
             timestamp: new Date().toISOString(),
         };
-        setMessages(prevMessages => [...prevMessages, tempMessage]);
+        setMessages(prevMessages => [...prevMessages, tempTextMessage]);
 
         try {
             if (activeChat.type === 'private') {
@@ -126,7 +180,7 @@ export function ChatPage() {
             setError("Falha no envio da mensagem.");
             setNewMessage(messageContent); // Devolve o texto para o input em caso de erro
             // Remove a mensagem temporária se o envio falhar
-            setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
+            setMessages(prev => prev.filter(m => m.id !== tempTextMessage.id));
         }
     };
 
@@ -167,23 +221,56 @@ export function ChatPage() {
                             {messages.map(msg => (
                                 <div key={msg.id} className={`${styles.messageBubble} ${msg.senderId === user?.id ? styles.myMessage : styles.theirMessage}`}>
                                     <div className={styles.messageContent}>
-                                      <p>{msg.content}</p>
+                                      {msg.isArquivo ? (
+                                        <p>📎 Arquivo: {msg.content.split('/').pop()}</p> // Exibe o nome do arquivo
+                                      ) : (
+                                        <p>{msg.content}</p>
+                                      )}
                                       <span className={styles.messageTimestamp}>
-                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {new Date(msg.timestamp || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                       </span>
                                     </div>
                                 </div>
                             ))}
                         </div>
                         <form onSubmit={handleSendMessage} className={styles.messageInputArea}>
+                            {selectedFile ? (
+                                <div className={styles.selectedFilePreview}>
+                                    <span>📎 {selectedFile.name}</span>
+                                    <button type="button" onClick={() => setSelectedFile(null)} className={styles.removeFileButton}>
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <input
+                                    type="text"
+                                    className={styles.messageInput}
+                                    placeholder="Digite sua mensagem..."
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                />
+                            )}
+                            
+                            {/* Input de arquivo oculto */}
                             <input
-                                type="text"
-                                className={styles.messageInput}
-                                placeholder="Digite sua mensagem..."
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
+                                type="file"
+                                ref={fileInputRef}
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                    setSelectedFile(e.target.files ? e.target.files[0] : null);
+                                    setNewMessage(''); // Limpa a mensagem de texto ao selecionar arquivo
+                                }}
                             />
-                            <button type="submit" className={styles.sendButton}>Enviar</button>
+                            {/* Botão/ícone para acionar o input de arquivo */}
+                            <button
+                                type="button"
+                                className={styles.attachButton} // Estilo CSS a ser adicionado
+                                onClick={() => fileInputRef.current?.click()}
+                                title="Anexar arquivo"
+                            >
+                                <Paperclip size={20} />
+                            </button>
+                            <button type="submit" className={styles.sendButton} disabled={!newMessage.trim() && !selectedFile}>Enviar</button>
                         </form>
                     </>
                 ) : (
