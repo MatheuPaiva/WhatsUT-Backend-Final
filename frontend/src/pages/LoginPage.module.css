@@ -5,7 +5,7 @@ body {
 
 .container {
     min-height: 100vh;
-    background-color: #f8fafc; /* Cor de fundo mais suave */
+    background-color: #111827; /* Cor de fundo principal (dark) */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -17,7 +17,7 @@ body {
     max-width: 64rem; /* max-w-6xl */
     display: grid;
     grid-template-columns: 1fr;
-    gap: 4rem; /* Aumenta o espaçamento */
+    gap: 4rem;
     align-items: center;
 }
 
@@ -41,18 +41,18 @@ body {
 }
 
 .title {
-    font-size: 2.5rem; /* Aumenta o título */
-    font-weight: 800; /* Extra-bold */
-    color: #1e293b;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #f9fafb; /* gray-50 */
 }
 
 .title span {
-    color: #2563eb; /* Azul para destaque */
+    color: #3b82f6; /* blue-500 */
 }
 
 .description {
     font-size: 1.125rem;
-    color: #475569;
+    color: #9ca3af; /* gray-400 */
     line-height: 1.75;
 }
 
@@ -81,12 +81,12 @@ body {
 .feature h3 {
     font-weight: 600;
     font-size: 1rem;
-    color: #1e293b;
+    color: #f3f4f6; /* gray-100 */
 }
 
 .feature p {
     font-size: 0.875rem;
-    color: #64748b;
+    color: #9ca3af; /* gray-400 */
 }
 
 .formContainer {
@@ -96,14 +96,15 @@ body {
 }
 
 .card {
-    background-color: white;
-    border-radius: 1rem; /* Bordas mais arredondadas */
-    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15); /* Sombra mais suave e pronunciada */
-    overflow: hidden; /* Garante que os filhos não "vazem" */
+    background-color: #1f2937; /* gray-800 */
+    border-radius: 1rem;
+    border: 1px solid #374151; /* gray-700 */
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    overflow: hidden;
 }
 
 .cardContent {
-    padding: 2.5rem; /* Mais padding */
+    padding: 2.5rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -121,24 +122,25 @@ body {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background-color: #eff6ff; /* Fundo do ícone azul claro */
+    background-color: #1e40af; /* Fundo do ícone azul escuro */
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #2563eb; /* Ícone azul */
+    color: #dbeafe; /* Ícone azul claro */
 }
 
 .formTitle {
     font-size: 1.875rem;
     font-weight: 700;
+    color: #f9fafb; /* gray-50 */
 }
 
 .formDescription {
-    color: #64748b;
+    color: #9ca3af; /* gray-400 */
 }
 
 .inputGroup {
-    position: relative; /* Necessário para posicionar o ícone dentro */
+    position: relative;
 }
 
 .input {
@@ -146,23 +148,31 @@ body {
     padding: 0.75rem 1rem;
     box-sizing: border-box;
     margin-bottom: 1rem;
-    padding-right: 2.5rem; /* Espaço para o ícone */
-    border: 1px solid #e2e8f0;
+    padding-right: 2.5rem;
+    border: 1px solid #4b5563; /* gray-600 */
     border-radius: 0.5rem;
     font-size: 0.875rem;
-    background-color: #f8fafc; /* Fundo do input mais suave */
+    background-color: #374151; /* gray-700 */
+    color: #f3f4f6; /* gray-100 */
 }
 
 .input::placeholder {
-    color: #94a3b8;
+    color: #9ca3af; /* gray-400 */
 }
+
+.input:focus {
+    outline: none;
+    border-color: #3b82f6; /* blue-500 */
+    box-shadow: 0 0 0 2px #1f2937, 0 0 0 4px #3b82f6;
+}
+
 
 .inputIcon {
     position: absolute;
     top: 50%;
     right: 0.75rem;
     transform: translateY(-50%);
-    color: #94a3b8;
+    color: #9ca3af; /* gray-400 */
 }
 
 .button {
@@ -171,36 +181,36 @@ body {
     border-radius: 0.5rem;
     font-weight: 600;
     color: white;
-    background-color: #2563eb;
+    background-color: #2563eb; /* blue-600 */
     border: none;
     cursor: pointer;
     transition: background-color 0.2s;
 }
 
 .button:hover {
-    background-color: #1d4ed8;
+    background-color: #1d4ed8; /* blue-700 */
 }
 
 .button:disabled {
-    background-color: #93c5fd;
+    background-color: #1e40af; /* blue-800 */
     cursor: not-allowed;
 }
 
 .error {
     text-align: center;
-    color: #dc2626;
+    color: #f87171; /* red-400 */
     font-size: 0.875rem;
 }
 
 .toggleContainer {
     text-align: center;
     font-size: 0.875rem;
-    color: #64748b;
+    color: #9ca3af; /* gray-400 */
 }
 
 .toggleButton {
     font-weight: 600;
-    color: #2563eb;
+    color: #3b82f6; /* blue-500 */
     background: none;
     border: none;
     cursor: pointer;

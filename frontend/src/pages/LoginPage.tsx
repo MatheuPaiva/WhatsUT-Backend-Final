@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
 import styles from './LoginPage.module.css';
-// 1. Importa os hooks necessários
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; 
-
-// 2. Importa os ícones que vamos usar
-import { MessageSquare, Users, Shield, Zap, Lock, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { MessageSquare, Users, Shield, Zap, Lock, User as UserIcon } from 'lucide-react';
 
 type FormMode = 'login' | 'register';
 
 export function LoginPage() {
-    // 3. Pega as funções do contexto e do roteador
     const navigate = useNavigate();
-    const { login } = useAuth(); // Usaremos a função de login do contexto
+    const { login } = useAuth(); // A função login do contexto agora só armazena os dados
 
     const [mode, setMode] = useState<FormMode>('login');
     const [name, setName] = useState('');
@@ -21,44 +17,63 @@ export function LoginPage() {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    // Função de envio de formulário simplificada
+    const handleApiLogin = async () => {
+        try {
+            const response = await fetch('http://localhost:3000/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, password }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Falha no login');
+            }
+            
+            // Decodifica o token para pegar os dados do usuário
+            const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+            const loggedInUser = { id: payload.sub, name: payload.name };
+            
+            // Agora sim, chama o login do contexto com os dados corretos
+            login(loggedInUser, data.access_token);
+            
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+    
+    const handleApiRegister = async () => {
+        if (password !== confirmPassword) {
+            setError('As senhas não coincidem.');
+            return;
+        }
+        try {
+            const response = await fetch('http://localhost:3000/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, password }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Erro no registro.');
+            alert('Conta criada com sucesso! Por favor, faça o login.');
+            setMode('login'); // Muda para a tela de login após o registro
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+    
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setIsLoading(true);
 
         if (mode === 'register') {
-            if (password !== confirmPassword) {
-                setError('As senhas não coincidem.');
-                setIsLoading(false);
-                return;
-            }
-            try {
-                const response = await fetch('http://localhost:3000/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, password }),
-                });
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.message || 'Erro no registro.');
-                alert('Conta criada com sucesso! Por favor, faça o login.');
-                setMode('login');
-            } catch (err: any) {
-                setError(err.message);
-            } finally {
-                setIsLoading(false);
-            }
+            await handleApiRegister();
         } else {
-            // Usa a função de login do contexto
-            try {
-                await login({ name, password });
-                navigate('/chat'); // Navega para o chat em caso de sucesso
-            } catch (err: any) {
-                setError(err.message || 'Credenciais inválidas.');
-            } finally {
-                setIsLoading(false);
-            }
+            await handleApiLogin();
         }
+        
+        setIsLoading(false);
     };
 
     const toggleMode = () => {
@@ -68,7 +83,8 @@ export function LoginPage() {
         setConfirmPassword('');
         setError('');
     };
-    
+
+    // O JSX (visual) do return não precisa de mudanças, apenas a lógica acima.
     return (
         <div className={styles.container}>
             <div className={styles.grid}>
@@ -79,32 +95,20 @@ export function LoginPage() {
                     </p>
                     <div className={styles.featuresGrid}>
                         <div className={styles.feature}>
-                            <div className={styles.iconWrapper} style={{backgroundColor: '#e0f2fe'}}>
-                                <MessageSquare size={20} style={{color: '#0284c7'}} />
-                            </div>
-                            <h3>Chat Privado</h3>
-                            <p>Conversas 1:1 seguras</p>
+                            <div className={styles.iconWrapper} style={{backgroundColor: '#1e3a8a'}}><MessageSquare size={20} style={{color: '#bfdbfe'}} /></div>
+                            <h3>Chat Privado</h3><p>Conversas 1:1 seguras</p>
                         </div>
                         <div className={styles.feature}>
-                            <div className={styles.iconWrapper} style={{backgroundColor: '#dcfce7'}}>
-                                <Users size={20} style={{color: '#16a34a'}} />
-                            </div>
-                            <h3>Grupos</h3>
-                            <p>Conversas em grupo</p>
+                            <div className={styles.iconWrapper} style={{backgroundColor: '#166534'}}><Users size={20} style={{color: '#dcfce7'}} /></div>
+                            <h3>Grupos</h3><p>Conversas em grupo</p>
                         </div>
                         <div className={styles.feature}>
-                            <div className={styles.iconWrapper} style={{backgroundColor: '#f3e8ff'}}>
-                                <Shield size={20} style={{color: '#7e22ce'}} />
-                            </div>
-                            <h3>Segurança</h3>
-                            <p>Criptografia JWT</p>
+                            <div className={styles.iconWrapper} style={{backgroundColor: '#5b21b6'}}><Shield size={20} style={{color: '#ede9fe'}} /></div>
+                            <h3>Segurança</h3><p>Criptografia JWT</p>
                         </div>
                         <div className={styles.feature}>
-                            <div className={styles.iconWrapper} style={{backgroundColor: '#fff7ed'}}>
-                                <Zap size={20} style={{color: '#ea580c'}} />
-                            </div>
-                            <h3>Tempo Real</h3>
-                            <p>WebSocket</p>
+                            <div className={styles.iconWrapper} style={{backgroundColor: '#9a3412'}}><Zap size={20} style={{color: '#ffedd5'}} /></div>
+                            <h3>Tempo Real</h3><p>Comunicação eficiente</p>
                         </div>
                     </div>
                 </div>
@@ -112,51 +116,25 @@ export function LoginPage() {
                     <div className={styles.card}>
                         <div className={styles.cardContent}>
                             <div className={styles.formHeader}>
-                                <div className={styles.formIcon}>
-                                    <MessageSquare size={24} />
-                                </div>
+                                <div className={styles.formIcon}><MessageSquare size={24} /></div>
                                 <div>
                                     <h2 className={styles.formTitle}>{mode === 'login' ? 'Entrar' : 'Criar nova conta'}</h2>
                                     <p className={styles.formDescription}>{mode === 'login' ? 'Acesse sua conta para continuar' : 'Crie sua conta para começar'}</p>
                                 </div>
                             </div>
-                            <form onSubmit={handleSubmit} className={styles.form}>
+                            <form onSubmit={handleSubmit}>
                                 {error && <p className={styles.error}>{error}</p>}
                                 <div className={styles.inputGroup}>
-                                    <input
-                                        type="text"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        className={styles.input}
-                                        placeholder="Digite seu nome"
-                                        required
-                                        disabled={isLoading}
-                                    />
-                                    <User size={16} className={styles.inputIcon} />
+                                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={styles.input} placeholder="Digite seu nome" required disabled={isLoading} />
+                                    <UserIcon size={16} className={styles.inputIcon} />
                                 </div>
                                 <div className={styles.inputGroup}>
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className={styles.input}
-                                        placeholder="Digite sua senha"
-                                        required
-                                        disabled={isLoading}
-                                    />
+                                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={styles.input} placeholder="Digite sua senha" required disabled={isLoading} />
                                     <Lock size={16} className={styles.inputIcon} />
                                 </div>
                                 {mode === 'register' && (
                                     <div className={styles.inputGroup}>
-                                        <input
-                                            type="password"
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            className={styles.input}
-                                            placeholder="Confirme sua senha"
-                                            required
-                                            disabled={isLoading}
-                                        />
+                                        <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={styles.input} placeholder="Confirme sua senha" required disabled={isLoading} />
                                         <Lock size={16} className={styles.inputIcon} />
                                     </div>
                                 )}

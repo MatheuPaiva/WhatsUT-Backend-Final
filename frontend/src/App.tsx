@@ -1,24 +1,20 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+// Arquivo: frontend/src/App.tsx
+
+import { Routes, Route, Navigate } from 'react-router-dom'; // 1. Remova o import do BrowserRouter
 import { LoginPage } from './pages/LoginPage';
 import { ChatPage } from './pages/ChatPage';
-import { ProtectedRoute } from './components/ProtectedRoute'; // Importe a Rota Protegida
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-
-        {/* Rotas Protegidas */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/chat" element={<ChatPage />} />
-          {/* Adicione outras rotas protegidas aqui dentro */}
-        </Route>
-
-        {/* Rota Padrão */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </BrowserRouter>
+    // 2. Remova o <BrowserRouter> daqui
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/chat" element={<ChatPage />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }
 
