@@ -1,212 +1,136 @@
-// Arquivo: frontend/src/components/CreateGroupModal.tsx
-
 import React, { useState, useEffect } from 'react';
 import * as api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import {
+    Modal, Box, Typography, TextField, Button, List, ListItem, ListItemText,
+    Checkbox, FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, CircularProgress, Alert
+} from '@mui/material';
 
-// Basic styles for the modal (you can integrate with ChatPage.module.css or create a new modal.module.css)
-const modalStyles: React.CSSProperties = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  width: '100vw',
-  height: '100vh',
-  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 1000,
+// Estilo para o Box do Modal
+const style = {
+    position: 'absolute' as 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 450,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 2
 };
-
-const contentStyles: React.CSSProperties = {
-  backgroundColor: '#1f2937', // gray-800
-  padding: '2rem',
-  borderRadius: '0.5rem',
-  width: '90%',
-  maxWidth: '500px',
-  color: '#f9fafb', // gray-50
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '1rem',
-};
-
-const inputStyles: React.CSSProperties = {
-  padding: '0.75rem',
-  border: '1px solid #4b5563', // gray-600
-  borderRadius: '0.375rem',
-  backgroundColor: '#374151', // gray-700
-  color: '#f3f4f6', // gray-100
-  width: '100%',
-  boxSizing: 'border-box',
-};
-
-const selectStyles: React.CSSProperties = { // NOVO ESTILO: Para o select
-  padding: '0.75rem',
-  border: '1px solid #4b5563',
-  borderRadius: '0.375rem',
-  backgroundColor: '#374151',
-  color: '#f3f4f6',
-  width: '100%',
-  boxSizing: 'border-box',
-  cursor: 'pointer',
-};
-
-
-const buttonStyles: React.CSSProperties = {
-  padding: '0.75rem 1.5rem',
-  borderRadius: '0.375rem',
-  border: 'none',
-  cursor: 'pointer',
-  fontWeight: '600',
-  transition: 'background-color 0.2s',
-  color: 'white',
-};
-
-const primaryButtonStyles: React.CSSProperties = {
-  ...buttonStyles,
-  backgroundColor: '#2563eb', // blue-600
-};
-
-const secondaryButtonStyles: React.CSSProperties = {
-  ...buttonStyles,
-  backgroundColor: '#4b5563', // gray-600
-};
-
 
 interface CreateGroupModalProps {
-  onClose: () => void;
-  onGroupCreated: () => void;
+    open: boolean;
+    onClose: () => void;
+    onGroupCreated: () => void;
 }
 
-export function CreateGroupModal({ onClose, onGroupCreated }: CreateGroupModalProps) {
-  const { user, token } = useAuth();
-  const [groupName, setGroupName] = useState('');
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [allUsers, setAllUsers] = useState<any[]>([]); // To store all users for selection
-  // NOVO ESTADO: Para a regra do último admin
-  const [lastAdminRule, setLastAdminRule] = useState<'promote' | 'delete'>('promote'); // Default: promote
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+export function CreateGroupModal({ open, onClose, onGroupCreated }: CreateGroupModalProps) {
+    const { user, token } = useAuth();
+    const [allUsers, setAllUsers] = useState<any[]>([]);
+    const [groupName, setGroupName] = useState('');
+    const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+    const [lastAdminRule, setLastAdminRule] = useState<'promote' | 'delete'>('promote');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (!token) return;
-      try {
-        const usersData = await api.getUsers(token);
-        // Filter out current user from the list
-        setAllUsers(usersData.filter((u: any) => u.id !== user?.id));
-      } catch (err) {
-        console.error("Failed to fetch users:", err);
-        setError("Não foi possível carregar a lista de usuários.");
-      }
+    useEffect(() => {
+        if (open && token) {
+            const fetchUsers = async () => {
+                try {
+                    const usersData = await api.getUsers(token);
+                    setAllUsers(usersData.filter((u: any) => u.id !== user?.id && !u.banned));
+                } catch (err) {
+                    setError("Não foi possível carregar a lista de usuários.");
+                }
+            };
+            fetchUsers();
+        }
+    }, [open, token, user]);
+
+    const handleMemberSelection = (memberId: string) => {
+        setSelectedMembers(prev =>
+            prev.includes(memberId)
+                ? prev.filter(id => id !== memberId)
+                : [...prev, memberId]
+        );
     };
-    fetchUsers();
-  }, [token, user]);
 
-  const handleCreateGroup = async () => {
-    if (!groupName.trim()) {
-      setError('O nome do grupo não pode ser vazio.');
-      return;
-    }
-    if (!user?.id || !token) {
-      setError('Usuário não autenticado.');
-      return;
-    }
+    const handleCreateGroup = async () => {
+        if (!groupName.trim()) {
+            setError('O nome do grupo não pode ser vazio.');
+            return;
+        }
+        if (!user?.id || !token) return;
 
-    setIsLoading(true);
-    setError('');
+        setIsLoading(true);
+        setError('');
 
-    try {
-      const initialAdmins = [user.id]; // Apenas o criador é admin inicialmente
-      const initialMembers = selectedMembers.includes(user.id) ? selectedMembers : [...selectedMembers, user.id]; // Garante que o criador esteja nos membros.
+        try {
+            await api.createGroup(token, {
+                name: groupName.trim(),
+                adminsId: [user.id],
+                members: [...selectedMembers, user.id],
+                lastAdminRule: lastAdminRule,
+            });
+            onGroupCreated();
+            handleClose();
+        } catch (err: any) {
+            setError(err.message || "Falha ao criar o grupo.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    const handleClose = () => {
+        setGroupName('');
+        setSelectedMembers([]);
+        setError('');
+        setIsLoading(false);
+        onClose();
+    };
 
-      await api.createGroup(token, {
-        name: groupName.trim(),
-        adminsId: initialAdmins,
-        members: initialMembers,
-        lastAdminRule: lastAdminRule, // ATUALIZADO: Usar o estado selecionado pelo usuário
-      });
-
-      onGroupCreated();
-      onClose();
-    } catch (err: any) {
-      console.error("Error creating group:", err);
-      setError(err.message || "Falha ao criar o grupo.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleMemberSelection = (memberId: string) => {
-    setSelectedMembers(prev =>
-      prev.includes(memberId)
-        ? prev.filter(id => id !== memberId)
-        : [...prev, memberId]
-    );
-  };
-
-  return (
-    <div style={modalStyles}>
-      <div style={contentStyles}>
-        <h2>Criar Novo Grupo</h2>
-        {error && <p style={{ color: '#f87171', fontSize: '0.875rem', textAlign: 'center' }}>{error}</p>}
-
-        <div>
-          <label htmlFor="groupName">Nome do Grupo:</label>
-          <input
-            type="text"
-            id="groupName"
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            style={inputStyles}
-            disabled={isLoading}
-          />
-        </div>
-
-        <div>
-          <label>Adicionar Membros:</label>
-          <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #4b5563', borderRadius: '0.375rem', padding: '0.5rem' }}>
-            {allUsers.length === 0 ? (
-              <p style={{ color: '#9ca3af' }}>Nenhum outro usuário disponível.</p>
-            ) : (
-              allUsers.map((u: any) => (
-                <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <input
-                    type="checkbox"
-                    id={`user-${u.id}`}
-                    checked={selectedMembers.includes(u.id)}
-                    onChange={() => handleMemberSelection(u.id)}
+    return (
+        <Modal open={open} onClose={handleClose}>
+            <Box sx={style}>
+                <Typography variant="h6" component="h2">Criar Novo Grupo</Typography>
+                {error && <Alert severity="error">{error}</Alert>}
+                <TextField
+                    label="Nome do Grupo"
+                    variant="outlined"
+                    fullWidth
+                    value={groupName}
+                    onChange={(e) => setGroupName(e.target.value)}
                     disabled={isLoading}
-                  />
-                  <label htmlFor={`user-${u.id}`} style={{ color: '#f3f4f6' }}>{u.name} {u.isOnline ? '(Online)' : '(Offline)'}</label>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* NOVO CAMPO: Seleção da regra do último admin */}
-        <div>
-          <label htmlFor="lastAdminRule">Quando o último admin sair:</label>
-          <select
-            id="lastAdminRule"
-            value={lastAdminRule}
-            onChange={(e) => setLastAdminRule(e.target.value as 'promote' | 'delete')}
-            style={selectStyles}
-            disabled={isLoading}
-          >
-            <option value="promote">Promover membro mais antigo a admin</option>
-            <option value="delete">Excluir o grupo</option>
-          </select>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-          <button onClick={onClose} style={secondaryButtonStyles} disabled={isLoading}>Cancelar</button>
-          <button onClick={handleCreateGroup} style={primaryButtonStyles} disabled={isLoading}>
-            {isLoading ? 'Criando...' : 'Criar Grupo'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+                />
+                <Box sx={{ maxHeight: 200, overflow: 'auto', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                    <List dense>
+                        {allUsers.map((u) => (
+                            <ListItem key={u.id} secondaryAction={
+                                <Checkbox edge="end" onChange={() => handleMemberSelection(u.id)} checked={selectedMembers.includes(u.id)} disabled={isLoading} />
+                            }>
+                                <ListItemText primary={u.name} />
+                            </ListItem>
+                        ))}
+                    </List>
+                </Box>
+                <FormControl component="fieldset">
+                    <FormLabel component="legend">Quando o último admin sair:</FormLabel>
+                    <RadioGroup row value={lastAdminRule} onChange={(e) => setLastAdminRule(e.target.value as any)}>
+                        <FormControlLabel value="promote" control={<Radio />} label="Promover membro" />
+                        <FormControlLabel value="delete" control={<Radio />} label="Excluir grupo" />
+                    </RadioGroup>
+                </FormControl>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+                    <Button onClick={handleClose} disabled={isLoading}>Cancelar</Button>
+                    <Button onClick={handleCreateGroup} variant="contained" disabled={isLoading}>
+                        {isLoading ? <CircularProgress size={24} /> : 'Criar Grupo'}
+                    </Button>
+                </Box>
+            </Box>
+        </Modal>
+    );
 }

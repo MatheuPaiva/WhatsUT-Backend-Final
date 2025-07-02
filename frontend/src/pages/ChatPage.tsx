@@ -1,598 +1,197 @@
-// Arquivo: frontend/src/pages/ChatPage.tsx
-
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import styles from './ChatPage.module.css';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import * as api from '../services/api';
-import { Paperclip, X, Settings, Users as UsersIcon, MessageSquareText } from 'lucide-react';
 import { CreateGroupModal } from '../components/CreateGroupModal';
+import { useThemeContext } from '../contexts/ThemeContext';
 
-interface User {
-  id: string;
-  name: string;
-  isCurrentUser: boolean;
-  isOnline: boolean;
-  banned?: boolean;
-}
+// Importações do MUI
+import {
+    Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon,
+    ListItemText, Divider, IconButton, TextField, Button, Avatar, Badge, Chip, Grid, Paper, Tooltip,
+    Dialog, DialogTitle, DialogContent, DialogActions
+} from '@mui/material';
+// CORREÇÃO: Ícones de tema (claro/escuro) adicionados à importação
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import {
+    Logout, Send, AttachFile, GroupAdd, People, Message, AddComment, Brightness4, Brightness7
+} from '@mui/icons-material';
 
-interface Group {
-  id: string;
-  name: string;
-  adminsId: string[];
-  members: string[];
-  pendingRequests: string[];
-}
+// Interfaces
+interface User { id: string; name: string; isCurrentUser: boolean; isOnline: boolean; banned?: boolean; }
+interface Group { id: string; name: string; adminsId: string[]; members: string[]; pendingRequests: string[]; }
+interface ChatMessage { id: string; senderId: string; content: string; timestamp: string; isArquivo?: boolean; }
 
-interface ChatMessage {
-  id: string;
-  senderId: string;
-  content: string;
-  timestamp: string;
-  isArquivo?: boolean;
-}
-
-const SUPER_ADMIN_USERNAME = 'admin';
+const drawerWidth = 320;
 
 export function ChatPage() {
     const { user, token, logout } = useAuth();
+    const { mode, toggleColorMode } = useThemeContext();
     const chatWindowRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [users, setUsers] = useState<User[]>([]); // Continua a lista completa de usuários
+    // Estados
+    const [allUsers, setAllUsers] = useState<User[]>([]);
     const [groups, setGroups] = useState<Group[]>([]);
+    const [privateConversations, setPrivateConversations] = useState<User[]>([]);
     const [activeChat, setActiveChat] = useState<{ type: 'private' | 'group'; id: string; name: string } | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
-    const [error, setError] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-    const [showGroupManagement, setShowGroupManagement] = useState(false);
     const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
-    const [showUserManagement, setShowUserManagement] = useState(false);
-    const [isStartConversationModalOpen, setIsStartConversationModalOpen] = useState(false);
-    const [privateConversations, setPrivateConversations] = useState<User[]>([]);
+    const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
 
+    // Lógica de busca de dados
+    const fetchData = async () => {
+        if (!token) return;
+        try {
+            const [usersData, groupsData] = await Promise.all([api.getUsers(token), api.getMyGroups(token)]);
+            setAllUsers(usersData);
+            setGroups(groupsData);
+        } catch (err) { console.error('Falha ao carregar dados:', err); }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [usersData, groupsData] = await Promise.all([
-                    api.getUsers(token),
-                    api.getMyGroups(token)
-                ]);
-                setUsers(usersData);
-                setGroups(groupsData);
-            } catch (err: any) {
-                setError('Falha ao carregar dados da barra lateral.');
-                console.error(err);
-            }
-        };
-        if (token) {
-            fetchData();
-        }
+        fetchData();
+        const interval = setInterval(fetchData, 5000);
+        return () => clearInterval(interval);
     }, [token]);
 
     useEffect(() => {
-        if (!activeChat) return;
-
+        if (!activeChat || !token) return;
         const fetchMessages = async () => {
             try {
-                const messagesData = activeChat.type === 'private'
-                    ? await api.getPrivateMessages(activeChat.id, token)
-                    : await api.getGroupMessages(activeChat.id, token);
-
-                console.log("Mensagens recebidas do backend:", messagesData);
-
+                const apiCall = activeChat.type === 'private' ? api.getPrivateMessages : api.getGroupMessages;
+                const messagesData = await apiCall(activeChat.id, token);
                 setMessages(messagesData);
-            } catch (err) {
-                console.error("Falha ao buscar mensagens", err);
-                setError("Não foi possível carregar as mensagens.");
-            }
+            } catch (err) { console.error("Falha ao buscar mensagens", err); }
         };
-
         fetchMessages();
-        const intervalId = setInterval(fetchMessages, 3000);
+        const intervalId = setInterval(fetchMessages, 2000);
         return () => clearInterval(intervalId);
-
     }, [activeChat, token]);
 
-    useEffect(() => {
-        if (chatWindowRef.current) {
-            chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    useEffect(() => { if (chatWindowRef.current) chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight; }, [messages]);
+    
+    // Handlers
+    const handleStartNewConversation = (userToChat: User) => {
+        if (!privateConversations.some(c => c.id === userToChat.id)) {
+            setPrivateConversations(prev => [...prev, userToChat]);
         }
-    }, [messages]);
-
-    const handleSelectChat = (chat: { type: 'private' | 'group'; id: string; name: string }) => {
-        setActiveChat(chat);
-        console.log("Chat Ativo Selecionado (nome):", chat.name);
-        console.log("Chat Ativo Selecionado (objeto completo):", chat);
-        setMessages([]);
-        setError('');
-        setSelectedFile(null);
-        setNewMessage('');
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-        setShowGroupManagement(false);
-        setShowUserManagement(false);
-        setIsStartConversationModalOpen(false);
+        setActiveChat({ type: 'private', id: userToChat.id, name: userToChat.name });
+        setIsUsersModalOpen(false);
     };
-
-    const handleUserSelectedFromModal = (userToChat: User) => {
-        setPrivateConversations(prev => {
-            if (!prev.some(u => u.id === userToChat.id)) {
-                return [...prev, userToChat];
-            }
-            return prev;
-        });
-        handleSelectChat({ type: 'private', id: userToChat.id, name: userToChat.name });
-        setIsStartConversationModalOpen(false);
-    };
-
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (selectedFile) {
-            if (!activeChat || !user || !token) return;
-
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-
-            const tempFileMessage: ChatMessage = {
-                id: `temp-file-${Date.now()}`,
-                senderId: user.id,
-                content: selectedFile.name,
-                timestamp: new Date().toISOString(),
-                isArquivo: true,
-            };
-            setMessages(prevMessages => [...prevMessages, tempFileMessage]);
-
-            try {
-                if (activeChat.type === 'private') {
-                    await api.sendPrivateFile(activeChat.id, formData, token);
-                } else {
-                    await api.sendGroupFile(activeChat.id, formData, token);
-                }
+        if (!activeChat || !token || (!newMessage.trim() && !selectedFile)) return;
+        try {
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                const apiCall = activeChat.type === 'private' ? api.sendPrivateFile : api.sendGroupFile;
+                await apiCall(activeChat.id, formData, token);
                 setSelectedFile(null);
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = '';
-                }
-            } catch (err) {
-                console.error("Erro ao enviar arquivo:", err);
-                setError("Falha no envio do arquivo.");
-                setMessages(prev => prev.filter(m => m.id !== tempFileMessage.id));
-            }
-            return;
-        }
-
-        if (!newMessage.trim() || !activeChat || !user) return;
-
-        const messageContent = newMessage;
-        setNewMessage('');
-
-        const tempTextMessage: ChatMessage = {
-            id: `temp-${Date.now()}`,
-            senderId: user.id,
-            content: messageContent,
-            timestamp: new Date().toISOString(),
-        };
-        setMessages(prevMessages => [...prevMessages, tempTextMessage]);
-
-        try {
-            if (activeChat.type === 'private') {
-                await api.sendPrivateMessage(activeChat.id, messageContent, token);
+                if (fileInputRef.current) fileInputRef.current.value = "";
             } else {
-                await api.sendGroupMessage(activeChat.id, messageContent, token);
+                const apiCall = activeChat.type === 'private' ? api.sendPrivateMessage : api.sendGroupMessage;
+                await apiCall(activeChat.id, newMessage, token);
+                setNewMessage('');
             }
-        } catch (err) {
-            console.error("Erro ao enviar mensagem:", err);
-            setError("Falha no envio da mensagem.");
-            setNewMessage(messageContent);
-            setMessages(prev => prev.filter(m => m.id !== tempTextMessage.id));
-        }
+        } catch (err) { console.error('Falha no envio:', err); }
     };
 
-    const activeGroupDetails = useMemo(() => {
-        if (activeChat?.type === 'group') {
-            return groups.find(g => g.id === activeChat.id);
-        }
-        return null;
-    }, [activeChat, groups]);
+    // --- RENDERIZAÇÃO ---
 
-    const isCurrentUserAdmin = useMemo(() => {
-        if (!user || !activeGroupDetails) return false;
-        return activeGroupDetails.adminsId.includes(user.id);
-    }, [user, activeGroupDetails]);
-
-    const isSuperAdmin = useMemo(() => {
-        return user?.name === SUPER_ADMIN_USERNAME;
-    }, [user]);
-
-    const handleApproveRequest = async (memberId: string) => {
-        if (!token || !activeGroupDetails) return;
-        try {
-            await api.approveMember(activeGroupDetails.id, memberId, token);
-            const updatedGroups = await api.getMyGroups(token);
-            setGroups(updatedGroups);
-            setError('');
-        } catch (err: any) {
-            console.error("Erro ao aprovar membro:", err);
-            setError(err.message || "Falha ao aprovar membro.");
-        }
-    };
-
-    const handleRejectRequest = async (memberId: string) => {
-        if (!token || !activeGroupDetails) return;
-        try {
-            await api.rejectMember(activeGroupDetails.id, memberId, token);
-            const updatedGroups = await api.getMyGroups(token);
-            setGroups(updatedGroups);
-            setError('');
-        } catch (err: any) {
-            console.error("Erro ao rejeitar membro:", err);
-            setError(err.message || "Falha ao rejeitar membro.");
-        }
-    };
-
-    const handleBanMember = async (memberId: string) => {
-        if (!token || !activeGroupDetails || memberId === user?.id) {
-            setError("Não é possível banir a si mesmo.");
-            return;
-        }
-        if (!window.confirm(`Tem certeza que deseja banir este membro do grupo?`)) return;
-
-        try {
-            await api.banMember(activeGroupDetails.id, memberId, token);
-            const updatedGroups = await api.getMyGroups(token);
-            setGroups(updatedGroups);
-            if (activeChat?.id === memberId) {
-                setActiveChat(null);
-                setMessages([]);
-            }
-            setError('');
-        } catch (err: any) {
-            console.error("Erro ao banir membro:", err);
-            setError(err.message || "Falha ao banir membro.");
-        }
-    };
-
-    const handleDeleteGroup = async () => {
-        if (!token || !activeGroupDetails) return;
-        if (!window.confirm(`ATENÇÃO: Tem certeza que deseja excluir o grupo "${activeGroupDetails.name}"? Esta ação é irreversível!`)) {
-            return;
-        }
-
-        try {
-            await api.deleteGroup(activeGroupDetails.id, token);
-            setActiveChat(null);
-            setMessages([]);
-            const updatedGroups = await api.getMyGroups(token);
-            setGroups(updatedGroups);
-            setError('');
-            setShowGroupManagement(false);
-        } catch (err: any) {
-            console.error("Erro ao excluir grupo:", err);
-            setError(err.message || "Falha ao excluir o grupo.");
-        }
-    };
-
-    const handleBanUserClick = async (userId: string, userName: string) => {
-        if (!token || userId === user?.id) {
-            setError("Não é possível banir a si mesmo.");
-            return;
-        }
-        if (!window.confirm(`Tem certeza que deseja BANIR o usuário "${userName}" da aplicação? Ele não poderá mais fazer login.`)) return;
-
-        try {
-            await api.banUser(userId, token);
-            const updatedUsers = await api.getUsers(token);
-            setUsers(updatedUsers);
-            setError('');
-        } catch (err: any) {
-            console.error("Erro ao banir usuário:", err);
-            setError(err.message || "Falha ao banir usuário.");
-        }
-    };
-
-    const handleUnbanUserClick = async (userId: string, userName: string) => {
-        if (!token) return;
-        if (!window.confirm(`Tem certeza que deseja DESBANIR o usuário "${userName}" da aplicação? Ele poderá fazer login novamente.`)) return;
-
-        try {
-            await api.unbanUser(userId, token);
-            const updatedUsers = await api.getUsers(token);
-            setUsers(updatedUsers);
-            setError('');
-        } catch (err: any) {
-            console.error("Erro ao desbanir usuário:", err);
-            setError(err.message || "Falha ao desbanir usuário.");
-        }
-    };
-
-
-    const handleGroupCreatedOrClosed = async () => {
-        setIsCreateGroupModalOpen(false);
-        if (token) {
-            try {
-                const groupsData = await api.getMyGroups(token);
-                setGroups(groupsData);
-            } catch (err) {
-                console.error("Erro ao recarregar grupos após criação:", err);
-            }
-        }
-    };
-
+    const drawerContent = (
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <Toolbar>
+                <Avatar sx={{ mr: 2, bgcolor: 'primary.dark' }}>{user?.name.charAt(0)}</Avatar>
+                <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>{user?.name}</Typography>
+                <Tooltip title={`Mudar para modo ${mode === 'light' ? 'escuro' : 'claro'}`}>
+                    <IconButton onClick={toggleColorMode}>
+                        {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                    </IconButton>
+                </Tooltip>
+                <Tooltip title="Sair"><IconButton onClick={logout}><Logout /></IconButton></Tooltip>
+            </Toolbar>
+            <Divider />
+            <Box sx={{ p: 2 }}><Button fullWidth variant="contained" startIcon={<AddComment />} onClick={() => setIsUsersModalOpen(true)}>Nova Conversa</Button></Box>
+            <List sx={{ overflowY: 'auto', flexGrow: 1 }}>
+                <ListItem><Typography variant="overline" color="text.secondary">Conversas Ativas</Typography></ListItem>
+                {privateConversations.map((u) => (
+                    <ListItem key={u.id} disablePadding>
+                        <ListItemButton selected={activeChat?.id === u.id} onClick={() => setActiveChat({ type: 'private', id: u.id, name: u.name })}>
+                            <ListItemIcon><Badge color={allUsers.find(au => au.id === u.id)?.isOnline ? "success" : "default"} variant="dot"><Avatar sx={{ bgcolor: 'secondary.main' }}>{u.name.charAt(0)}</Avatar></Badge></ListItemIcon>
+                            <ListItemText primary={u.name} />
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+                <Divider sx={{ my: 1 }} /><ListItem><Typography variant="overline" color="text.secondary">Grupos</Typography></ListItem>
+                {groups.map((group) => (
+                    <ListItem key={group.id} disablePadding>
+                        <ListItemButton selected={activeChat?.id === group.id} onClick={() => setActiveChat({ type: 'group', id: group.id, name: group.name })}>
+                            <ListItemIcon><Avatar><People /></Avatar></ListItemIcon>
+                            <ListItemText primary={group.name} />
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+            <Divider />
+            <Box sx={{ p: 2 }}><Button fullWidth variant="outlined" startIcon={<GroupAdd />} onClick={() => setIsCreateGroupModalOpen(true)}>Criar Novo Grupo</Button></Box>
+        </Box>
+    );
 
     return (
-        <div className={styles.chatLayout}>
-            <aside className={styles.sidebar}>
-                <div className={styles.sidebarHeader}>
-                    <h3>Bem-vindo, {user?.name}</h3>
-                    <button onClick={logout} className={styles.logoutButton}>Sair</button>
-                </div>
-                {error && <p className={styles.error}>{error}</p>}
-                
-                <button
-                    className={styles.startConversationButton}
-                    onClick={() => setIsStartConversationModalOpen(true)}
-                >
-                    <MessageSquareText size={18} style={{ marginRight: '8px' }} /> Iniciar Conversa
-                </button>
-
-                {isSuperAdmin && (
-                    <button
-                        className={styles.manageUsersButton}
-                        onClick={() => setShowUserManagement(prev => !prev)}
-                    >
-                        <UsersIcon size={16} style={{ marginRight: '5px' }} /> Gerenciar Usuários
-                    </button>
-                )}
-
-                <div className={styles.contactsList}>
-                    <h4 className={styles.listTitle}>Conversas</h4>
-                    {/* Renderiza as conversas privadas iniciadas */}
-                    {privateConversations.map((u) => (
-                        <div
-                            key={u.id}
-                            className={`${styles.contactItem} ${activeChat?.id === u.id && activeChat.type === 'private' ? styles.active : ''}`}
-                            onClick={() => handleSelectChat({ type: 'private', id: u.id, name: u.name })}
-                        >
-                            <span className={u.isOnline ? styles.onlineIndicator : styles.offlineIndicator}></span>
-                            {u.name}
-                            {u.banned && <span className={styles.bannedIndicator}>BANIDO</span>}
-                        </div>
-                    ))}
-                    {/* Renderiza os grupos */}
-                    {groups.map((group) => (
-                        <div key={group.id} className={`${styles.contactItem} ${activeChat?.id === group.id && activeChat.type === 'group' ? styles.active : ''}`} onClick={() => handleSelectChat({ type: 'group', id: group.id, name: group.name })}>
-                            {group.name}
-                            {group.pendingRequests && group.pendingRequests.length > 0 && isCurrentUserAdmin && (
-                                <span className={styles.pendingRequestsBadge}>({group.pendingRequests.length} pendentes)</span>
-                            )}
-                        </div>
-                    ))}
-                    <button
-                        className={styles.createGroupButton}
-                        onClick={() => setIsCreateGroupModalOpen(true)}
-                    >
-                        + Criar Novo Grupo
-                    </button>
-                </div>
-            </aside>
-
-            {/* --- Janela Principal do Chat --- */}
-            <main className={styles.mainContent}>
-                {isStartConversationModalOpen && (
-                    <div className={styles.startConversationModal}>
-                        <h3>Selecione um usuário para conversar</h3>
-                        <div className={styles.userListContainer}>
-                            {users.filter(u => !u.isCurrentUser && !u.banned).map((u) => (
-                                <div
-                                    key={u.id}
-                                    className={styles.contactItem}
-                                    onClick={() => handleUserSelectedFromModal(u)}
-                                >
-                                    <span className={u.isOnline ? styles.onlineIndicator : styles.offlineIndicator}></span>
-                                    {u.name}
-                                </div>
-                            ))}
-                        </div>
-                        <button className={styles.closeModalButton} onClick={() => setIsStartConversationModalOpen(false)}>
-                            Fechar
-                        </button>
-                    </div>
-                )}
-
-
-                {isSuperAdmin && showUserManagement && (
-                    <div className={styles.userManagementSection}>
-                        <h3>Gerenciamento de Usuários da Aplicação</h3>
-                        <div className={styles.managementCategory}>
-                            <h4>Todos os Usuários ({users.length})</h4>
-                            <ul className={styles.managementList}>
-                                {users.map(u => (
-                                    <li key={u.id} className={styles.managementItem}>
-                                        {u.name} {u.isCurrentUser ? '(Você)' : ''}
-                                        {u.banned && <span className={styles.bannedIndicator}>BANIDO</span>}
-                                        <div className={styles.managementActions}>
-                                            {u.id !== user?.id && !u.banned && (
-                                                <button
-                                                    onClick={() => handleBanUserClick(u.id, u.name)}
-                                                    className={styles.actionButton + ' ' + styles.banButton}
-                                                >
-                                                    Banir
-                                                </button>
-                                            )}
-                                            {u.id !== user?.id && u.banned && (
-                                                <button
-                                                    onClick={() => handleUnbanUserClick(u.id, u.name)}
-                                                    className={styles.actionButton + ' ' + styles.approveButton}
-                                                >
-                                                    Desbanir
-                                                </button>
-                                            )}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-                )}
-
-                {activeChat?.type === 'group' && isCurrentUserAdmin && showGroupManagement && activeGroupDetails && (
-                    <div className={styles.groupManagementSection}>
-                        <h3>Gerenciar Grupo: {activeGroupDetails.name}</h3>
-
-                        <div className={styles.managementCategory}>
-                            <h4>Solicitações Pendentes ({activeGroupDetails.pendingRequests?.length || 0})</h4>
-                            {activeGroupDetails.pendingRequests && activeGroupDetails.pendingRequests.length > 0 ? (
-                                <ul className={styles.managementList}>
-                                    {activeGroupDetails.pendingRequests.map(reqId => {
-                                        const requestingUser = users.find(u => u.id === reqId);
-                                        return (
-                                            <li key={reqId} className={styles.managementItem}>
-                                                {requestingUser?.name || 'Usuário desconhecido'}
-                                                <div className={styles.managementActions}>
-                                                    <button onClick={() => handleApproveRequest(reqId)} className={styles.actionButton + ' ' + styles.approveButton}>Aprovar</button>
-                                                    <button onClick={() => handleRejectRequest(reqId)} className={styles.actionButton + ' ' + styles.rejectButton}>Rejeitar</button>
-                                                </div>
-                                            </li>
-                                        );
-                                    })}
-                                </ul>
-                            ) : (
-                                <p>Nenhuma solicitação pendente.</p>
-                            )}
-                        </div>
-
-                        <div className={styles.managementCategory}>
-                            <h4>Membros do Grupo ({activeGroupDetails.members?.length || 0})</h4>
-                            <ul className={styles.managementList}>
-                                {activeGroupDetails.members.map(memberId => {
-                                    const memberUser = users.find(u => u.id === memberId);
-                                    return (
-                                        <li key={memberId} className={styles.managementItem}>
-                                            {memberUser?.name || 'Usuário desconhecido'} {memberId === user?.id ? '(Você)' : ''}
-                                            {isCurrentUserAdmin && memberId !== user?.id && (
-                                                <button onClick={() => handleBanMember(memberId)} className={styles.actionButton + ' ' + styles.banButton}>Banir</button>
-                                            )}
-                                            {activeGroupDetails.adminsId.includes(memberId) && <span className={styles.adminBadge}>Admin</span>}
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-
-                        <div className={styles.managementCategory}>
-                            <h4>Ações do Grupo</h4>
-                            <button
-                                onClick={handleDeleteGroup}
-                                className={styles.deleteGroupButton + ' ' + styles.actionButton}
-                            >
-                                Excluir Grupo
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-
-                {(!showUserManagement && !activeChat && !showGroupManagement) ? (
-                    <div className={styles.placeholder}>
-                        
-                        <p>Clique em "Iniciar Conversa" para encontrar um novo usuário.</p>
-                    </div>
-                ) : activeChat ? (
+        <Box sx={{ display: 'flex', height: '100vh' }}>
+            <Drawer variant="permanent" sx={{ width: drawerWidth, flexShrink: 0, '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' } }}>{drawerContent}</Drawer>
+            <Dialog open={isUsersModalOpen} onClose={() => setIsUsersModalOpen(false)} fullWidth maxWidth="xs">
+                <DialogTitle>Iniciar Nova Conversa</DialogTitle>
+                <DialogContent><List>{allUsers.filter(u => !u.isCurrentUser && !u.banned).map(u => (<ListItem key={u.id} disablePadding><ListItemButton onClick={() => handleStartNewConversation(u)}><ListItemIcon><Badge color={u.isOnline ? "success" : "default"} variant="dot"><Avatar>{u.name.charAt(0)}</Avatar></Badge></ListItemIcon><ListItemText primary={u.name} /></ListItemButton></ListItem>))}</List></DialogContent>
+                <DialogActions><Button onClick={() => setIsUsersModalOpen(false)}>Cancelar</Button></DialogActions>
+            </Dialog>
+            <CreateGroupModal open={isCreateGroupModalOpen} onClose={() => setIsCreateGroupModalOpen(false)} onGroupCreated={fetchData} />
+            <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+                {activeChat ? (
                     <>
-                        <header className={styles.chatHeader}>
-                            <h2>{activeChat.name}</h2> {/* Nome do chat aqui */}
-                            {activeChat.type === 'group' && isCurrentUserAdmin && (
-                                <button
-                                    className={styles.manageGroupButton}
-                                    onClick={() => setShowGroupManagement(prev => !prev)}
-                                    title="Gerenciar Grupo"
-                                >
-                                    <Settings size={20} />
-                                </button>
-                            )}
-                        </header>
-                        <div className={styles.chatWindow} ref={chatWindowRef}>
-                            {messages.map(msg => {
-                                const sender = users.find(u => u.id === msg.senderId); // Encontra os detalhes do remetente
+                        <AppBar position="static" sx={{ bgcolor: 'background.paper', boxShadow: 1, color: 'text.primary' }}>
+                            <Toolbar>
+                                <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>{activeChat.name.charAt(0)}</Avatar>
+                                <Typography variant="h6">{activeChat.name}</Typography>
+                            </Toolbar>
+                        </AppBar>
+                        <Box ref={chatWindowRef} sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
+                            {messages.map((msg, index) => {
+                                const isMe = msg.senderId === user?.id;
+                                const senderName = allUsers.find(u => u.id === msg.senderId)?.name || 'Desconhecido';
+                                const fileName = msg.content.split(/[/\\]/).pop() ?? '';
+                                const fileUrl = `http://localhost:3000/${msg.content}`;
                                 return (
-                                    <div key={msg.id} className={`${styles.messageBubble} ${msg.senderId === user?.id ? styles.myMessage : styles.theirMessage}`}>
-                                        <div className={styles.messageSenderName}> {/* NOVO: Nome do remetente */}
-                                            {msg.senderId === user?.id ? 'Você' : sender?.name || 'Desconhecido'}
-                                        </div>
-                                        <div className={styles.messageContent}>
-                                          {msg.isArquivo ? (
-                                            <p>📎 Arquivo: <a
-                                                href={`http://localhost:3000/${msg.content}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{ color: 'lightblue', textDecoration: 'underline', cursor: 'pointer' }}
-                                              >
-                                                {msg.content.split(/[/\\]/).pop()}
-                                              </a>
-                                            </p>
-                                          ) : (
-                                            <p>{msg.content}</p>
-                                          )}
-                                          <span className={styles.messageTimestamp}>
-                                            {new Date(msg.timestamp || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                          </span>
-                                        </div>
-                                    </div>
+                                    <Grid key={msg.id || index} container justifyContent={isMe ? 'flex-end' : 'flex-start'} sx={{ mb: 1 }}>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', maxWidth: '70%' }}>
+                                            <Typography variant="caption" sx={{ color: 'text.secondary', px: 1.5 }}>{isMe ? 'Você' : senderName}</Typography>
+                                            <Paper elevation={3} sx={{ p: 1.5, borderRadius: isMe ? '20px 5px 20px 20px' : '5px 20px 20px 20px', bgcolor: isMe ? 'primary.main' : 'background.paper', color: 'text.primary' }}>
+                                                {msg.isArquivo ? (<Button href={fileUrl} target="_blank" startIcon={<AttachFile />} sx={{ color: 'inherit', textTransform: 'none', fontWeight: 'bold' }}>{fileName}</Button>) : (<Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</Typography>)}
+                                            </Paper>
+                                            <Typography variant="caption" sx={{ color: 'text.secondary', px: 1.5, pt: 0.5 }}>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Typography>
+                                        </Box>
+                                    </Grid>
                                 );
                             })}
-                        </div>
-                        <form onSubmit={handleSendMessage} className={styles.messageInputArea}>
-                            {selectedFile ? (
-                                <div className={styles.selectedFilePreview}>
-                                    <span>📎 {selectedFile.name}</span>
-                                    <button type="button" onClick={() => setSelectedFile(null)} className={styles.removeFileButton}>
-                                        <X size={16} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <input
-                                    type="text"
-                                    className={styles.messageInput}
-                                    placeholder="Digite sua mensagem..."
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                />
-                            )}
-
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                style={{ display: 'none' }}
-                                onChange={(e) => {
-                                    setSelectedFile(e.target.files ? e.target.files[0] : null);
-                                    setNewMessage('');
-                                }}
-                            />
-                            <button
-                                type="button"
-                                className={styles.attachButton}
-                                onClick={() => fileInputRef.current?.click()}
-                                title="Anexar arquivo"
-                            >
-                                <Paperclip size={20} />
-                            </button>
-                            <button type="submit" className={styles.sendButton} disabled={!newMessage.trim() && !selectedFile}>Enviar</button>
-                        </form>
+                        </Box>
+                        <Box component="form" onSubmit={handleSendMessage} sx={{ p: 2, bgcolor: 'background.paper', display: 'flex', gap: 1, borderTop: 1, borderColor: 'divider' }}>
+                            <TextField fullWidth variant="outlined" placeholder={selectedFile ? `Arquivo: ${selectedFile.name}` : "Digite sua mensagem..."} value={newMessage} onChange={(e) => setNewMessage(e.target.value)} size="small" disabled={!!selectedFile} />
+                            <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)} />
+                            <Tooltip title="Anexar Arquivo"><IconButton color="primary" onClick={() => fileInputRef.current?.click()}><AttachFile /></IconButton></Tooltip>
+                            <Button type="submit" variant="contained" endIcon={<Send />} disabled={!newMessage.trim() && !selectedFile}>Enviar</Button>
+                        </Box>
                     </>
-                ) : null}
-            </main>
-
-            {isCreateGroupModalOpen && (
-                <CreateGroupModal
-                    onClose={handleGroupCreatedOrClosed}
-                    onGroupCreated={handleGroupCreatedOrClosed}
-                />
-            )}
-        </div>
+                ) : (
+                    <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: 'text.secondary', textAlign: 'center' }}>
+                        <Message sx={{ fontSize: 100, mb: 2, color: 'grey.700' }} /><Typography variant="h4">Bem-vindo ao WhatsUT</Typography><Typography>Clique em "Nova Conversa" para iniciar um chat ou selecione um grupo.</Typography>
+                    </Box>
+                )}
+            </Box>
+        </Box>
     );
 }
