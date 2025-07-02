@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import * as api from '../services/api';
 import { CreateGroupModal } from '../components/CreateGroupModal';
@@ -8,13 +8,12 @@ import { useThemeContext } from '../contexts/ThemeContext';
 import {
     Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon,
     ListItemText, Divider, IconButton, TextField, Button, Avatar, Badge, Chip, Grid, Paper, Tooltip,
-    Dialog, DialogTitle, DialogContent, DialogActions
+    Dialog, DialogTitle, DialogContent, DialogActions, Alert
 } from '@mui/material';
-// CORREÇÃO: Ícones de tema (claro/escuro) adicionados à importação
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
+
 import {
-    Logout, Send, AttachFile, GroupAdd, People, Message, AddComment, Brightness4, Brightness7
+    Logout, Send, AttachFile, GroupAdd, People, Message, AddComment, Brightness4, Brightness7,
+    AdminPanelSettings, Block, CheckCircle
 } from '@mui/icons-material';
 
 // Interfaces
@@ -23,6 +22,7 @@ interface Group { id: string; name: string; adminsId: string[]; members: string[
 interface ChatMessage { id: string; senderId: string; content: string; timestamp: string; isArquivo?: boolean; }
 
 const drawerWidth = 320;
+const SUPER_ADMIN_USERNAME = 'admin';
 
 export function ChatPage() {
     const { user, token, logout } = useAuth();
@@ -38,8 +38,14 @@ export function ChatPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    
+    // Estados de UI e Modais
     const [isCreateGroupModalOpen, setIsCreateGroupModalOpen] = useState(false);
     const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
+    const [isUserManagementOpen, setIsUserManagementOpen] = useState(false);
+    const [error, setError] = useState('');
+
+    const isSuperAdmin = useMemo(() => user?.name === SUPER_ADMIN_USERNAME, [user]);
 
     // Lógica de busca de dados
     const fetchData = async () => {
@@ -58,7 +64,7 @@ export function ChatPage() {
     }, [token]);
 
     useEffect(() => {
-        if (!activeChat || !token) return;
+        if (!activeChat || !token) { setMessages([]); return; }
         const fetchMessages = async () => {
             try {
                 const apiCall = activeChat.type === 'private' ? api.getPrivateMessages : api.getGroupMessages;
@@ -101,56 +107,100 @@ export function ChatPage() {
         } catch (err) { console.error('Falha no envio:', err); }
     };
 
+    const handleBanToggle = async (userId: string, currentStatus: boolean | undefined) => {
+        if (!token) return;
+        const action = currentStatus ? 'desbanir' : 'banir';
+        if (!window.confirm(`Tem certeza que deseja ${action} este usuário?`)) return;
+        try {
+            setError('');
+            const apiCall = currentStatus ? api.unbanUser : api.banUser;
+            await apiCall(userId, token);
+            fetchData(); // Atualiza a lista de usuários após a ação
+        } catch (err: any) {
+            setError(err.message || `Falha ao ${action} o usuário.`);
+        }
+    };
+
     // --- RENDERIZAÇÃO ---
 
     const drawerContent = (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Toolbar>
-                <Avatar sx={{ mr: 2, bgcolor: 'primary.dark' }}>{user?.name.charAt(0)}</Avatar>
-                <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>{user?.name}</Typography>
-                <Tooltip title={`Mudar para modo ${mode === 'light' ? 'escuro' : 'claro'}`}>
-                    <IconButton onClick={toggleColorMode}>
-                        {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-                    </IconButton>
-                </Tooltip>
-                <Tooltip title="Sair"><IconButton onClick={logout}><Logout /></IconButton></Tooltip>
-            </Toolbar>
-            <Divider />
-            <Box sx={{ p: 2 }}><Button fullWidth variant="contained" startIcon={<AddComment />} onClick={() => setIsUsersModalOpen(true)}>Nova Conversa</Button></Box>
-            <List sx={{ overflowY: 'auto', flexGrow: 1 }}>
-                <ListItem><Typography variant="overline" color="text.secondary">Conversas Ativas</Typography></ListItem>
-                {privateConversations.map((u) => (
-                    <ListItem key={u.id} disablePadding>
-                        <ListItemButton selected={activeChat?.id === u.id} onClick={() => setActiveChat({ type: 'private', id: u.id, name: u.name })}>
-                            <ListItemIcon><Badge color={allUsers.find(au => au.id === u.id)?.isOnline ? "success" : "default"} variant="dot"><Avatar sx={{ bgcolor: 'secondary.main' }}>{u.name.charAt(0)}</Avatar></Badge></ListItemIcon>
-                            <ListItemText primary={u.name} />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-                <Divider sx={{ my: 1 }} /><ListItem><Typography variant="overline" color="text.secondary">Grupos</Typography></ListItem>
-                {groups.map((group) => (
-                    <ListItem key={group.id} disablePadding>
-                        <ListItemButton selected={activeChat?.id === group.id} onClick={() => setActiveChat({ type: 'group', id: group.id, name: group.name })}>
-                            <ListItemIcon><Avatar><People /></Avatar></ListItemIcon>
-                            <ListItemText primary={group.name} />
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
-            <Divider />
-            <Box sx={{ p: 2 }}><Button fullWidth variant="outlined" startIcon={<GroupAdd />} onClick={() => setIsCreateGroupModalOpen(true)}>Criar Novo Grupo</Button></Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Toolbar>
+            <Avatar sx={{ mr: 2, bgcolor: 'primary.dark' }}>{user?.name.charAt(0)}</Avatar>
+            <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>{user?.name}</Typography>
+            <Tooltip title={`Mudar para modo ${mode === 'light' ? 'escuro' : 'claro'}`}><IconButton onClick={toggleColorMode}>{mode === 'dark' ? <Brightness7 /> : <Brightness4 />}</IconButton></Tooltip>
+            <Tooltip title="Sair"><IconButton onClick={logout}><Logout /></IconButton></Tooltip>
+        </Toolbar>
+        <Divider />
+        <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Button fullWidth variant="contained" startIcon={<AddComment />} onClick={() => setIsUsersModalOpen(true)}>Nova Conversa</Button>
+            {isSuperAdmin && (
+                <Button fullWidth variant="contained" color="warning" startIcon={<AdminPanelSettings />} onClick={() => setIsUserManagementOpen(true)}>
+                    Gerenciar Usuários
+                </Button>
+            )}
         </Box>
+        <List sx={{ overflowY: 'auto', flexGrow: 1 }}>
+            <ListItem><Typography variant="overline" color="text.secondary">Conversas Ativas</Typography></ListItem>
+            {privateConversations.map((u) => (
+                <ListItem key={u.id} disablePadding>
+                    <ListItemButton selected={activeChat?.id === u.id} onClick={() => setActiveChat({ type: 'private', id: u.id, name: u.name })}>
+                        <ListItemIcon><Badge color={allUsers.find(au => au.id === u.id)?.isOnline ? "success" : "default"} variant="dot"><Avatar sx={{ bgcolor: 'secondary.main' }}>{u.name.charAt(0)}</Avatar></Badge></ListItemIcon>
+                        <ListItemText primary={u.name} />
+                    </ListItemButton>
+                </ListItem>
+            ))}
+            <Divider sx={{ my: 1 }} /><ListItem><Typography variant="overline" color="text.secondary">Grupos</Typography></ListItem>
+            {groups.map((group) => (
+                <ListItem key={group.id} disablePadding>
+                    <ListItemButton selected={activeChat?.id === group.id} onClick={() => setActiveChat({ type: 'group', id: group.id, name: group.name })}>
+                        <ListItemIcon><Avatar><People /></Avatar></ListItemIcon>
+                        <ListItemText primary={group.name} />
+                    </ListItemButton>
+                </ListItem>
+            ))}
+        </List>
+        <Divider />
+        <Box sx={{ p: 2 }}><Button fullWidth variant="outlined" startIcon={<GroupAdd />} onClick={() => setIsCreateGroupModalOpen(true)}>Criar Novo Grupo</Button></Box>
+      </Box>
     );
 
     return (
         <Box sx={{ display: 'flex', height: '100vh' }}>
             <Drawer variant="permanent" sx={{ width: drawerWidth, flexShrink: 0, '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' } }}>{drawerContent}</Drawer>
+            
             <Dialog open={isUsersModalOpen} onClose={() => setIsUsersModalOpen(false)} fullWidth maxWidth="xs">
                 <DialogTitle>Iniciar Nova Conversa</DialogTitle>
                 <DialogContent><List>{allUsers.filter(u => !u.isCurrentUser && !u.banned).map(u => (<ListItem key={u.id} disablePadding><ListItemButton onClick={() => handleStartNewConversation(u)}><ListItemIcon><Badge color={u.isOnline ? "success" : "default"} variant="dot"><Avatar>{u.name.charAt(0)}</Avatar></Badge></ListItemIcon><ListItemText primary={u.name} /></ListItemButton></ListItem>))}</List></DialogContent>
                 <DialogActions><Button onClick={() => setIsUsersModalOpen(false)}>Cancelar</Button></DialogActions>
             </Dialog>
+
+            <Dialog open={isUserManagementOpen} onClose={() => setIsUserManagementOpen(false)} fullWidth maxWidth="sm">
+                <DialogTitle>Gerenciamento de Usuários</DialogTitle>
+                <DialogContent>
+                    {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                    <List>
+                        {allUsers.map(u => (
+                            <ListItem key={u.id} secondaryAction={
+                                u.id !== user?.id && (
+                                    u.banned ? (
+                                        <Button variant="outlined" color="success" startIcon={<CheckCircle />} onClick={() => handleBanToggle(u.id, u.banned)}>Desbanir</Button>
+                                    ) : (
+                                        <Button variant="contained" color="error" startIcon={<Block />} onClick={() => handleBanToggle(u.id, u.banned)}>Banir</Button>
+                                    )
+                                )
+                            }>
+                                <ListItemIcon><Avatar>{u.name.charAt(0)}</Avatar></ListItemIcon>
+                                <ListItemText primary={u.name} secondary={u.banned ? 'Usuário Banido' : (u.isOnline ? 'Online' : 'Offline')} />
+                            </ListItem>
+                        ))}
+                    </List>
+                </DialogContent>
+                <DialogActions><Button onClick={() => setIsUserManagementOpen(false)}>Fechar</Button></DialogActions>
+            </Dialog>
+
             <CreateGroupModal open={isCreateGroupModalOpen} onClose={() => setIsCreateGroupModalOpen(false)} onGroupCreated={fetchData} />
+
             <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
                 {activeChat ? (
                     <>
